@@ -31,6 +31,8 @@ current_trial, trials = 1, 1
 if len(sys.argv) == 7:
 	trials = int(sys.argv[6])
 print("Testing accuracy of model with trial count of: ", trials)
+total_correct = 0
+total_from_trials = 0
 for trial in range(trials):
 	testing_data = []
 	add_to_data(testing_data, testing_size, normal_data, tumor_data)
@@ -50,10 +52,16 @@ for trial in range(trials):
 			_, predicted = torch.max(outputs.data, 1)
 			total += target.size(0)
 			correct += (predicted == target).sum().item()
+			
+			total_correct += correct
+			total_from_trials += total
+
 			sys.stdout.write("\r")
 			sys.stdout.flush()
 		print("-" * 10)
 		print("Correct: " + str(correct), "Total: "+ str(total))
+percent_correct = total_correct / total_from_trials
+print("Percent correct from all trias is: ", percent_correct)
 print((time.time() - start_time) // 60)
 normal_data.close()
 tumor_data.close()
