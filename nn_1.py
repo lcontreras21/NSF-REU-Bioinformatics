@@ -11,6 +11,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 import sys
 import time
+import random
+import matplotlib.pyplot as plt
 
 def add_to_data(data_set, data_max, normal_data, tumor_data):
 	have_n_tumors = 0
@@ -28,15 +30,15 @@ def add_to_data(data_set, data_max, normal_data, tumor_data):
 class NN(nn.Module):
 	def __init__(self, num_labels, hidden_size, gene_size):
 		super(NN, self).__init__()
-		#self.fc1 = nn.Linear(gene_size, hidden_size)
-		#self.relu = nn.ReLU()
-		#self.fc2 = nn.Linear(hidden_size, num_labels)
-		self.fc1 = nn.Linear(gene_size, num_labels)	
+		self.fc1 = nn.Linear(gene_size, hidden_size)
+		self.relu = nn.ReLU()
+		self.fc2 = nn.Linear(hidden_size, num_labels)
+		#self.fc1 = nn.Linear(gene_size, num_labels)	
 	def forward(self, gene_vec):
 		out = self.fc1(gene_vec)
-		#out = self.relu(out)
-		#out = self.fc2(out)
-		out = F.log_softmax(out, dim=1)
+		out = self.relu(out)
+		out = self.fc2(out)
+		#out = F.log_softmax(out, dim=1)
 		return out
 def make_gene_vector(file_line, input_size):
 	data = list(map(float, file_line))
@@ -67,9 +69,9 @@ if __name__ == "__main__":
 	# hyper parameters
 	input_size = len(gene_info[1:-1])
 	output_size = 2
-	num_epochs = 5
-	hidden_size = 0
-	learning_rate = 0.1
+	num_epochs = 3 
+	hidden_size = 100
+	learning_rate = 0.01
 
 	# text files for normal and tumor data
 	normal_data = open("normal.txt", "r")
@@ -88,12 +90,17 @@ if __name__ == "__main__":
 
 	# building the model and loading other functions
 	model = NN(output_size, hidden_size, input_size)
-	loss_function = nn.NLLLoss()
-	optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+	model = model.train()
+	loss_function = nn.CrossEntropyLoss()
+	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+	plt.ion()
 	
+	min_loss = 10
 	print("Training the model")
 	for epoch in range(num_epochs):
 		print(epoch + 1, "out of", num_epochs, end="")
+		random.shuffle(training_data)
 		for instance, label in training_data:
 			# erasing gradients from previous run
 			model.zero_grad()
@@ -108,10 +115,13 @@ if __name__ == "__main__":
 			loss = loss_function(log_probs, target)
 			loss.backward()
 			optimizer.step()
-		
+			#loss_list.append(loss.item())
+			#index.append(marker)
+			#marker += 1
+			
 		# progress tracker
 		sys.stdout.write("\r")
 		sys.stdout.flush()
 	print("Saving the model to file")
 	torch.save(model.state_dict(), "nn_1_state_dict.pt")
-	print((time.time() - start_time) // 60)
+	print("Time elapsed: ", (time.time() - start_time) // 60)

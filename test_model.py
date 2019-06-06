@@ -9,6 +9,7 @@ import torch.optim as optim
 import sys
 import time
 from nn_1 import NN, add_to_data, make_gene_vector, make_target, label_to_ix
+import random
 
 start_time = time.time()
 
@@ -36,11 +37,13 @@ total_from_trials = 0
 for trial in range(trials):
 	testing_data = []
 	add_to_data(testing_data, testing_size, normal_data, tumor_data)
-	
+	random.shuffle(testing_data)
 	print("Trial: ", trial + 1)
 	with torch.no_grad():
 		correct, total, index = 0, 0, 0
 		increment = len(testing_data) // 10
+		if increment == 0:
+			increment = 10
 		for instance, label in testing_data:
 			if index % increment == 0:
 				print("-" * (index // increment), end="")
@@ -52,15 +55,14 @@ for trial in range(trials):
 			_, predicted = torch.max(outputs.data, 1)
 			total += target.size(0)
 			correct += (predicted == target).sum().item()
-			
-			total_correct += correct
-			total_from_trials += total
-
 			sys.stdout.write("\r")
-			sys.stdout.flush()
+			sys.stdout.flush()	
+		total_correct += correct
+		total_from_trials += total
 		print("-" * 10)
 		print("Correct: " + str(correct), "Total: "+ str(total))
 percent_correct = total_correct / total_from_trials
+print("Total correct: ", total_correct, "Total: ", total_from_trials)
 print("Percent correct from all trias is: ", percent_correct)
 print((time.time() - start_time) // 60)
 normal_data.close()
