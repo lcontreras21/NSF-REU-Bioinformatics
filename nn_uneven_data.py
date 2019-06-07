@@ -1,4 +1,4 @@
-# neural network attempt number 1
+ neural network attempt number 4 
 # creating a basic neural network that's stock from python
 
 # using tutorial found at https://pytorch.org/tutorials/beginner/nlp/deep_learning_tutorial.html#creating-network-components-in-pytorch
@@ -14,15 +14,15 @@ import time
 import random
 import matplotlib.pyplot as plt
 
-def add_to_data(data_set, data_max, normal_data, tumor_data):
+def add_to_data_uneven(data_set, tumor_max, normal_max, normal_data, tumor_data):
 	have_n_tumors = 0
 	have_n_normals = 0
 	# there should be equal amount of tumor and normal data
-	while have_n_tumors < data_max:
+	while have_n_tumors < tumor_max:
 		next_line = tumor_data.readline().split()
 		data_set += [(next_line[1:-1], next_line[-1])]
 		have_n_tumors += 1
-	while have_n_normals < data_max :
+	while have_n_normals < normal_max :
 		next_line = normal_data.readline().split()
 		data_set += [(next_line[1:-1], next_line[-1])]
 		have_n_normals += 1
@@ -54,39 +54,40 @@ label_to_ix = {"Tumor": 0, "Normal": 1}
 if __name__ == "__main__":
 	start_time = time.time()
 	# read in the file for gene
-	f = open("..\subset_0.1_logged_scaled_rnaseq_hk_normalized.txt", "r")
-	gene_info = f.readline().split()
+	#f = open("..\subset_0.1_logged_scaled_rnaseq_hk_normalized.txt", "r")
+	#gene_info = f.readline().split()
 	
 	# convert gene location to integer value
-	gene_to_ix = {}
-	for gene_name in gene_info[1:-1]:
-		if gene_name not in gene_to_ix:
-			gene_to_ix[gene_name] = len(gene_to_ix)
-	
-	f.close()
+	#gene_to_ix = {}
+	#for gene_name in gene_info[1:-1]:
+	#	if gene_name not in gene_to_ix:
+	#		gene_to_ix[gene_name] = len(gene_to_ix)
+	#f.close()
 	
 
 	# hyper parameters
-	input_size = len(gene_info[1:-1])
+	input_size = 20629 
 	output_size = 2
 	num_epochs = 3 
 	hidden_size = 100
 	learning_rate = 0.01
 
 	# text files for normal and tumor data
-	normal_data = open("text_files\\normal.txt", "r")
-	tumor_data = open("text_files\\tumor.txt", "r")
+	normal_data = open("normal.txt", "r")
+	tumor_data = open("tumor.txt", "r")
 	print("Loading the data")
 	
 	training_data = []
-	training_size = int(sys.argv[1])
-	add_to_data(training_data, training_size, normal_data, tumor_data)
+	tumor_data_size = int(sys.argv[1])
+	normal_data_size = int(sys.argv[2])
+	
+	add_to_data_uneven(training_data, tumor_data_size, normal_data_size,  normal_data, tumor_data)
 
 	normal_data.close()
 	tumor_data.close()
 
-	print("Building the model trained on " + str(len(training_data) // 2) + "-" + str(len(training_data) // 2) + " input,  with " +  str(num_epochs) + " epochs and " + str(hidden_size) + " neurons in the hidden layer." )
-	print("Learning rate is ", str(learning_rate))
+	print("Building the model trained on", tumor_data_size, "-", normal_data_size, "input, with", num_epochs, "epochs and", hidden_size, "neurons in the hidden layer.")
+	print("Learning rate is", learning_rate)
 
 	# building the model and loading other functions
 	model = NN(output_size, hidden_size, input_size)
@@ -94,9 +95,6 @@ if __name__ == "__main__":
 	loss_function = nn.CrossEntropyLoss()
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-	plt.ion()
-	
-	min_loss = 10
 	print("Training the model")
 	for epoch in range(num_epochs):
 		print(epoch + 1, "out of", num_epochs, end="")
@@ -109,22 +107,15 @@ if __name__ == "__main__":
 			target = make_target(label, label_to_ix)
 			
 			# getting probabilities from instance
-			log_probs = model(gene_vec)
+			output = model(gene_vec)
 				
 			# applying learning to the model
-			loss = loss_function(log_probs, target)
+			loss = loss_function(output, target)
 			loss.backward()
 			optimizer.step()
-			#loss_list.append(loss.item())
-			#index.append(marker)
-			#marker += 1
-			
 		# progress tracker
 		sys.stdout.write("\r")
 		sys.stdout.flush()
-	print(optimizer)
-	print(optimizer.state_dict())
 	print("Saving the model to file")
-	torch.save(model.state_dict(), "state_dicts\\nn_1_state_dict.pt")
-	torch.save(optimizer.state_dict(), "state_dicts\\optim.pt")
+	torch.save(model.state_dict(), "nn_4_state_dict.pt")
 	print("Time elapsed: ", (time.time() - start_time) // 60)
