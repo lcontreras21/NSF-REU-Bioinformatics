@@ -69,8 +69,8 @@ if __name__ == "__main__":
 	# hyper parameters
 	input_size = len(gene_info[1:-1])
 	output_size = 2
-	num_epochs = 3 
-	hidden_size = 100
+	num_epochs = 1 
+	hidden_size = 50
 	learning_rate = 0.01
 
 	# text files for normal and tumor data
@@ -122,8 +122,6 @@ if __name__ == "__main__":
 		# progress tracker
 		sys.stdout.write("\r")
 		sys.stdout.flush()
-	print(optimizer)
-	print(optimizer.state_dict())
 	print("Saving the model to file")
 	torch.save(model.state_dict(), "state_dicts\\nn_1_state_dict.pt")
 	torch.save(optimizer.state_dict(), "state_dicts\\optim.pt")

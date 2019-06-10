@@ -74,21 +74,71 @@ def import_gene_groups():
 	f.close()
 	return gene_groups
 
+# using hallmark gene groups, set the weights in the first layer to zero
+# for the genes that are not in the hallmark group.
+# for example, first node in hidden layer is first hallmark group and all
+# genes not in that group will have value of zero in the input
+def set_weights(model_state): 
+	gene_groups = import_gene_groups()
+	gene_info = gene_dict()
+
+	# we are interested in the first layer in model_state
+	layer = model_state[list(model_state)[0]]
+	# this returns a tensor of dimension (size of gene_group, 20629)
+	
+	# based on gene_groups data, set value equal to zero if not in group
+	# iterate through gene groups
+	# iterate through each gene in gene group
+	# get its ix from gene_dict
+	# set the value of it equal to zero based on gene group index and ix
+	
+	group_count = 0
+	for group in gene_groups:
+		for gene in group:
+			try:
+				gene_index = gene_info[gene]
+				layer[group_count, gene_index] = 0
+			except:
+				pass
+		group_count += 1
+
+# NN class 
+class NN(nn.Module):
+	def __init(self, input_size, hidden_size, output_size):
+		super(NN, self).__init__()
+		self.fc1 = nn.Linear(input_size, hidden_size)
+		self.relu = nn.ReLU()
+		self.fc2 = nn.Linear(hidden_size, num_labels)
+	def foward(self, input_vector):
+		out = self.fc1(input_vector)
+		out = self.relu(out)
+		out = self.fc2(out)
+		return out
+
 
 if __name__ == "__main__":
 	start_time = time.monotonic()
 	
+
+
 	### Hyperparameters
 	input_size = 20629
 	output_size = 2
 	num_epochs = 3
-	hidden_size = # make this variable based on gene group data
+	hidden_size = len(import_gene_groups) 
 	learning_rate = 0.01
 	
 	# terminal message to track work
 	print("Building model trained on data of Tumor:", tumor_samples, "Normal:", normal_samples)
 	print("Hyperparameters:", num_epochs, "epochs,", hidden_size, "neurons in hidden layer,", learning_rate, "learning rate")
 
+	model = NN(input_size, hidden_size, output_size)
+	model = model.train()
+	loss_function = nn.CrossEntropyLoss()
+	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+
+	
 
 	end_time = time.monotonic()
 	print("Runtime:", timedelta(seconds=end_time - start_time))
