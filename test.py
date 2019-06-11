@@ -1,32 +1,61 @@
-
+from nn_1 import NN
 import torch
-import torch.utils.data
-from nn_1 import add_to_data
+import torch.optim as optim
+'''
+model = NN(2, 50, 20629)
+model.load_state_dict(torch.load("state_dicts\\nn_1_state_dict.pt"))
+optimizer = optim.Adam(model.parameters(), lr=0.01)
+optimizer.load_state_dict(torch.load("state_dicts\\optim.pt"))
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+state_dict = model.state_dict()
+
+unaltered = state_dict[list(state_dict.keys())[0]]
+print(unaltered[49, 7076])
+print(unaltered[49, 6298])
 
 
-normal_data = open("normal.txt", "r")
-tumor_data = open("tumor.txt", "r")
 
 
-training_data = []
-add_to_data(training_data, 6, normal_data, tumor_data)
 
-#training_data = [('Matt', 20), ('Karim', 30), ('Maya', 40)]
-train_loader = torch.utils.data.DataLoader(dataset=training_data, batch_size=2)
+for state_no in state_dict["state"]:
+	state_info = state_dict["state"][state_no]
+	for item in state_info:
+		if type(state_info[item]) != type(20):
+			print(state_info[item].size())
 
 
-def show_batch():
-	for step, (batch_x, batch_y) in enumerate(train_loader):  # for each training step
-		print(list(list(zip(*batch_x))[1]))
 
-def show_batch2():
-	for epoch in range(3): 
-		for step, (batch_x, batch_y) in enumerate(training_data):  # for each training step
-			# train your data...
-			print('Epoch:', epoch, '| Step: ', step, '| batch x: ', len(batch_x), '| batch y: ', batch_y)
-show_batch()
-print("-" * 10)
-show_batch2()
+f = open("text_files\\h.all.v6.2.symbols.txt", "r")
+gene_list = []
+for line in f:
+	gene_data = line.split()[2:]
+	for gene in gene_data:
+		if gene not in gene_list:
+			gene_list.append(gene)
 
-normal_data.close()
-tumor_data.close()
+f.close()
+print(len(gene_list))
+'''
+
+from nn_partial_links import *
+
+g = open("text_files\\missing_genes.txt", "w")
+
+#testing to see if all genes in hallmark are in cancer group
+gene_data = gene_dict()
+#print(gene_data["Zfp-112"])
+
+gene_groups = import_gene_groups()
+count = 0
+for gene_group in gene_groups:
+	for gene in gene_group:
+		try:
+			gene_data[gene]
+		except:
+			g.write(gene)
+			g.write("\t")
+			print(gene)
+			count += 1
+g.close()
+print(count)

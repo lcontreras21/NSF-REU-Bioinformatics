@@ -15,7 +15,7 @@ import sys
 import time
 from datetime import timedelta
 import random
-
+import copy
 
 # functions that I have used, plus new functions to read files.
 
@@ -52,7 +52,8 @@ def make_gene_vector(file_line):
 
 # makes a dictionary for gene index to be able to connect nodes
 def gene_dict():
-	f = open("..\subset_0.1_logged_scaled_rnaseq_hk_normalized.txt", "r")
+	#f = open("\subset_0.1_logged_scaled_rnaseq_hk_normalized.txt", "r")
+	f = open("text_files\\logged_scaled_rnaseq.txt", "r")
 	gene_names = f.readline().split()
 	f.close()
 
@@ -143,10 +144,16 @@ if __name__ == "__main__":
 	training_data = []
 	add_to_data(training_data, tumor_max, normal_max)
 
+
+	
 	# set the starting weights to model the biology
 	set_weights(model.state_dict())
 
+	# making a copy to see if changes are permanent
+	untrained_dict = copy.deepcopy(model.state_dict())
+	untrained = untrained_dict[list(untrained_dict.keys())[0]]
 	# train the model
+	
 	print("Training the model")
 	for epoch in range(num_epochs):
 		print(epoch + 1, "out of", num_epochs, end="", flush=True)
@@ -154,7 +161,7 @@ if __name__ == "__main__":
 		for instance, label in training_data:
 			# erase gradients from previous run
 			model.zero_grad()
-
+			
 			gene_vec = make_gene_vector(instance)
 			target = make_target(label, label_to_ix)
 
@@ -165,9 +172,19 @@ if __name__ == "__main__":
 			loss = loss_function(output, target)
 			loss.backward()
 			optimizer.step()
+			set_weights(model.state_dict())
 		sys.stdout.write("\r")
 		sys.stdout.flush()
 	
+	trained_dict = copy.deepcopy(model.state_dict())
+	trained = trained_dict[list(trained_dict.keys())[0]]
+	
+	print("Checking if model weights don't change")
+	print("Before:",untrained[49, 6298])
+	print("After:", trained[49, 6298])
+	print("Before:",untrained[49, 7076])
+	print("After:", trained[49, 7076])
+
 	print("Saving the model to file")
 	torch.save(model.state_dict(),"state_dicts\\nn_partial_links.pt")
 	end_time = time.monotonic()

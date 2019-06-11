@@ -72,15 +72,15 @@ def test_model(model):
 				total += target.size(0)
 				correct += (predicted == target).item()
 				
-				if predicted.item() == 1:
+				if target.item() == 1:
 					total_pos += 1
 					if torch.equal(predicted, target):
 						true_pos += 1
-				elif predicted.item() == 0:
+				elif target.item() == 0:
 					total_neg += 1
 					if torch.equal(predicted, target):
 						true_neg += 1
-
+				
 				sys.stdout.write("\r")
 				sys.stdout.flush()	
 		
@@ -96,16 +96,13 @@ def test_model(model):
 			print("Selectivity:", true_neg, "/", total_neg, "=", true_neg/total_neg)
 			total_correct += correct
 			total_from_trials += total
-			print("-" * 10)
-			print("Correct: " + str(correct), "Total: "+ str(total))
-			print()
 	percent_correct = total_correct / total_from_trials
-	print("Total correct: ", total_correct, "Total: ", total_from_trials)
-	print("Percent correct from all trias is: ", percent_correct)
+	print("Total Correct: ", total_correct, "/", total_from_trials, "=", percent_correct)
 
-
+print("Partial model")
 test_model(model_partial)
 print()
+print("Base model")
 test_model(model_base)
 
 print((time.time() - start_time) // 60)
