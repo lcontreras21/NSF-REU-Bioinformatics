@@ -34,7 +34,7 @@ def add_to_data(data_set, tumor_max, normal_max):
 	while normals < normal_max:
 		next_line = normal_data.readline().split()
 		data_set += [(next_line[1:-1], next_line[-1])]
-		tumors += 1
+		normals += 1
 	normal_data.close()
 	tumor_data.close()
 
@@ -104,12 +104,12 @@ def set_weights(model_state):
 
 # NN class 
 class NN(nn.Module):
-	def __init(self, input_size, hidden_size, output_size):
+	def __init__(self, input_size, hidden_size, output_size):
 		super(NN, self).__init__()
 		self.fc1 = nn.Linear(input_size, hidden_size)
 		self.relu = nn.ReLU()
-		self.fc2 = nn.Linear(hidden_size, num_labels)
-	def foward(self, input_vector):
+		self.fc2 = nn.Linear(hidden_size, output_size)
+	def forward(self, input_vector):
 		out = self.fc1(input_vector)
 		out = self.relu(out)
 		out = self.fc2(out)
@@ -118,18 +118,16 @@ class NN(nn.Module):
 
 if __name__ == "__main__":
 	start_time = time.monotonic()
-	
-
 
 	### Hyperparameters
 	input_size = 20629
 	output_size = 2
 	num_epochs = 3
-	hidden_size = len(import_gene_groups) 
+	hidden_size = len(import_gene_groups()) 
 	learning_rate = 0.01
 	
 	# terminal message to track work
-	print("Building model trained on data of Tumor:", tumor_samples, "Normal:", normal_samples)
+	print("Building model trained on", sys.argv[1], "Tumor and", sys.argv[2], "Normal samples.")
 	print("Hyperparameters:", num_epochs, "epochs,", hidden_size, "neurons in hidden layer,", learning_rate, "learning rate")
 
 	model = NN(input_size, hidden_size, output_size)
@@ -137,8 +135,40 @@ if __name__ == "__main__":
 	loss_function = nn.CrossEntropyLoss()
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
+	# get data size from the terminal and make practice training set
+	## todo: make separate files for training and testing to reduce
+	## this constant loading and configuring
+	tumor_max = int(sys.argv[1])
+	normal_max = int(sys.argv[2])
+	training_data = []
+	add_to_data(training_data, tumor_max, normal_max)
 
+	# set the starting weights to model the biology
+	set_weights(model.state_dict())
+
+	# train the model
+	print("Training the model")
+	for epoch in range(num_epochs):
+		print(epoch + 1, "out of", num_epochs, end="", flush=True)
+		random.shuffle(training_data)
+		for instance, label in training_data:
+			# erase gradients from previous run
+			model.zero_grad()
+
+			gene_vec = make_gene_vector(instance)
+			target = make_target(label, label_to_ix)
+
+			# get probabilities from instance
+			output = model(gene_vec)
+
+			# apply learning to the model based on the instance
+			loss = loss_function(output, target)
+			loss.backward()
+			optimizer.step()
+		sys.stdout.write("\r")
+		sys.stdout.flush()
 	
-
+	print("Saving the model to file")
+	torch.save(model.state_dict(),"state_dicts\\nn_partial_links.pt")
 	end_time = time.monotonic()
 	print("Runtime:", timedelta(seconds=end_time - start_time))

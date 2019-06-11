@@ -1,4 +1,4 @@
- neural network attempt number 4 
+# neural network attempt number 4 
 # creating a basic neural network that's stock from python
 
 # using tutorial found at https://pytorch.org/tutorials/beginner/nlp/deep_learning_tutorial.html#creating-network-components-in-pytorch
@@ -69,12 +69,12 @@ if __name__ == "__main__":
 	input_size = 20629 
 	output_size = 2
 	num_epochs = 3 
-	hidden_size = 100
+	hidden_size = 50
 	learning_rate = 0.01
 
 	# text files for normal and tumor data
-	normal_data = open("normal.txt", "r")
-	tumor_data = open("tumor.txt", "r")
+	normal_data = open("text_files\\normal.txt", "r")
+	tumor_data = open("text_files\\tumor.txt", "r")
 	print("Loading the data")
 	
 	training_data = []
@@ -117,5 +117,5 @@ if __name__ == "__main__":
 		sys.stdout.write("\r")
 		sys.stdout.flush()
 	print("Saving the model to file")
-	torch.save(model.state_dict(), "nn_4_state_dict.pt")
+	torch.save(model.state_dict(), "state_dicts\\nn_base.pt")
 	print("Time elapsed: ", (time.time() - start_time) // 60)
