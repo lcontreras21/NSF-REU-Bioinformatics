@@ -16,14 +16,15 @@ import time
 from datetime import timedelta
 import random
 import copy
+import pickle
 
 # functions that I have used, plus new functions to read files.
 
 # adds data to a list for training or testing. Could add an 
 # even amount or uneven amount based on inputs.
 def add_to_data(data_set, tumor_max, normal_max):
-	normal_data = open("text_files\\normal.txt", "r")
-	tumor_data = open("text_files\\tumor.txt", "r")
+	normal_data = open("text_files/normal.txt", "r")
+	tumor_data = open("text_files/tumor.txt", "r")
 	tumors = 0
 	normals = 0
 	while tumors < tumor_max:
@@ -53,20 +54,24 @@ def make_gene_vector(file_line):
 # makes a dictionary for gene index to be able to connect nodes
 def gene_dict():
 	#f = open("\subset_0.1_logged_scaled_rnaseq_hk_normalized.txt", "r")
-	f = open("text_files\\logged_scaled_rnaseq.txt", "r")
+	f = open("text_files/logged_scaled_rnaseq.txt", "r")
 	gene_names = f.readline().split()
 	f.close()
 
 	gene_to_index = {}
+	index = 0
 	for gene_name in gene_names[1:-1]:
 		if gene_name not in gene_to_index:
-			gene_to_index[gene_name] = len(gene_to_index)
+			gene_to_index[gene_name] = [index]
+		else:
+			gene_to_index[gene_name] = gene_to_index[gene_name] +[index]
+		index += 1
 	return gene_to_index
 
 # import hallmark gene data
 # should probably make this dynamic for other files
 def import_gene_groups():
-	f = open("text_files\\h.all.v6.2.symbols.txt", "r")
+	f = open("text_files/h.all.v6.2.symbols.txt", "r")
 	gene_groups = []
 	for line in f:
 		gene_data = line.split()
@@ -83,6 +88,9 @@ def set_weights(model_state):
 	gene_groups = import_gene_groups()
 	gene_info = gene_dict()
 
+	f = open("text_files/gene_pairs.pickle", "rb")
+	updated_gene_names = pickle.load(f)
+	f.close()
 	# we are interested in the first layer in model_state
 	layer = model_state[list(model_state)[0]]
 	# this returns a tensor of dimension (size of gene_group, 20629)
@@ -92,13 +100,16 @@ def set_weights(model_state):
 	# iterate through each gene in gene group
 	# get its ix from gene_dict
 	# set the value of it equal to zero based on gene group index and ix
-	
+		
 	group_count = 0
 	for group in gene_groups:
 		for gene in group:
+			# check if there is a different name for that gene
+			if gene in updated_gene_names.keys():
+				gene = updated_gene_names[gene]
 			try:
-				gene_index = gene_info[gene]
-				layer[group_count, gene_index] = 0
+				for index in gene_info[gene]:
+					layer[group_count, index] = 0
 			except:
 				pass
 		group_count += 1
@@ -121,7 +132,8 @@ if __name__ == "__main__":
 	start_time = time.monotonic()
 
 	### Hyperparameters
-	input_size = 20629
+	input_size = 35728
+	print(input_size)
 	output_size = 2
 	num_epochs = 3
 	hidden_size = len(import_gene_groups()) 
@@ -186,6 +198,6 @@ if __name__ == "__main__":
 	print("After:", trained[49, 7076])
 
 	print("Saving the model to file")
-	torch.save(model.state_dict(),"state_dicts\\nn_partial_links.pt")
+	torch.save(model.state_dict(),"state_dicts/nn_partial_links.pt")
 	end_time = time.monotonic()
 	print("Runtime:", timedelta(seconds=end_time - start_time))

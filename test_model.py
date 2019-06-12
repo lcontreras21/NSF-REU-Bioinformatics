@@ -8,21 +8,21 @@ import torch.nn.functional as F
 import torch.optim as optim
 import sys
 import time
-from nn_1 import NN, add_to_data, make_gene_vector, make_target, label_to_ix
+from nn_partial_links import NN, add_to_data, make_gene_vector, make_target, label_to_ix
 import random
 start_time = time.time()
 
-normal_data = open("text_files\\normal.txt", "r")
-tumor_data = open("text_files\\tumor.txt", "r")
+normal_data = open("text_files/normal.txt", "r")
+tumor_data = open("text_files/tumor.txt", "r")
 
 print("Importing the model from the saved location")
-input_size, output_size, hidden_size = 20629, 2, int(sys.argv[1])
-model_partial = NN(output_size, hidden_size, input_size)
-model_partial.load_state_dict(torch.load("state_dicts\\nn_partial_links.pt"))
+input_size, output_size, hidden_size = 35728, 2, int(sys.argv[1])
+model_partial = NN(input_size, hidden_size, output_size)
+model_partial.load_state_dict(torch.load("state_dicts/nn_partial_links.pt"))
 model_partial.eval()
 
-model_base = NN(output_size, hidden_size, input_size)
-model_base.load_state_dict(torch.load("state_dicts\\nn_base.pt"))
+model_base = NN(input_size, hidden_size, output_size)
+model_base.load_state_dict(torch.load("state_dicts/nn_base.pt"))
 model_base.eval()
 
 tumor_data_size = int(sys.argv[2])
@@ -49,7 +49,7 @@ def test_model(model):
 	for trial in range(trials):	
 		testing_data = []
 		# test with even data to see results
-		add_to_data(testing_data, samples_per_trial, normal_data, tumor_data)
+		add_to_data(testing_data, samples_per_trial, samples_per_trial)
 		random.shuffle(testing_data)
 		
 		print("Trial: ", trial + 1)
@@ -65,7 +65,7 @@ def test_model(model):
 					print("-" * (index // increment), end="")
 				index += 1
 				
-				gene_vec = make_gene_vector(instance, input_size)
+				gene_vec = make_gene_vector(instance)
 				target = make_target(label, label_to_ix)
 				outputs = model(gene_vec)
 				_, predicted = torch.max(outputs.data, 1)

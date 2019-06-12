@@ -12,7 +12,6 @@ import torch.optim as optim
 import sys
 import time
 import random
-import matplotlib.pyplot as plt
 
 def add_to_data_uneven(data_set, tumor_max, normal_max, normal_data, tumor_data):
 	have_n_tumors = 0
@@ -66,15 +65,15 @@ if __name__ == "__main__":
 	
 
 	# hyper parameters
-	input_size = 20629 
+	input_size = 35728 
 	output_size = 2
 	num_epochs = 3 
 	hidden_size = 50
 	learning_rate = 0.01
 
 	# text files for normal and tumor data
-	normal_data = open("text_files\\normal.txt", "r")
-	tumor_data = open("text_files\\tumor.txt", "r")
+	normal_data = open("text_files/normal.txt", "r")
+	tumor_data = open("text_files/tumor.txt", "r")
 	print("Loading the data")
 	
 	training_data = []
@@ -117,5 +116,5 @@ if __name__ == "__main__":
 		sys.stdout.write("\r")
 		sys.stdout.flush()
 	print("Saving the model to file")
-	torch.save(model.state_dict(), "state_dicts\\nn_base.pt")
+	torch.save(model.state_dict(), "state_dicts/nn_base.pt")
 	print("Time elapsed: ", (time.time() - start_time) // 60)

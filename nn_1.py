@@ -12,7 +12,6 @@ import torch.optim as optim
 import sys
 import time
 import random
-import matplotlib.pyplot as plt
 
 def add_to_data(data_set, data_max, normal_data, tumor_data):
 	have_n_tumors = 0
