@@ -22,9 +22,18 @@ import pickle
 
 # adds data to a list for training or testing. Could add an 
 # even amount or uneven amount based on inputs.
-def add_to_data(data_set, tumor_max, normal_max):
+def add_to_data(data_set, tumor_max, normal_max, used_tumor, used_normal):
+	# good for adding data at once, bad for trial testing
 	normal_data = open("text_files/normal.txt", "r")
 	tumor_data = open("text_files/tumor.txt", "r")
+	
+	if used_tumor > 0:
+		for i in range(used_tumor):
+			tumor_data.readline()
+	if used_normal > 0:
+		for i in range(used_normal):
+			normal_data.readline()
+	
 	tumors = 0
 	normals = 0
 	while tumors < tumor_max:
@@ -80,39 +89,47 @@ def import_gene_groups():
 	f.close()
 	return gene_groups
 
+def get_gene_indicies(gene_group, gene_indexer, alternate_names):
+	indices = []
+	for gene in gene_group:
+		try:
+			if gene in alternate_names.keys():
+				gene = alternate_names[gene]
+			indices += gene_indexer[gene]
+		except:
+			pass
+	indices.sort()
+	return indices
+
 # using hallmark gene groups, set the weights in the first layer to zero
 # for the genes that are not in the hallmark group.
 # for example, first node in hidden layer is first hallmark group and all
 # genes not in that group will have value of zero in the input
 def set_weights(model_state): 
 	gene_groups = import_gene_groups()
-	gene_info = gene_dict()
+	gene_indexer = gene_dict()
 
 	f = open("text_files/gene_pairs.pickle", "rb")
 	updated_gene_names = pickle.load(f)
 	f.close()
 	# we are interested in the first layer in model_state
 	layer = model_state[list(model_state)[0]]
-	# this returns a tensor of dimension (size of gene_group, 20629)
+	# this returns a tensor of dimension (size of gene_group, size of input)
 	
-	# based on gene_groups data, set value equal to zero if not in group
-	# iterate through gene groups
-	# iterate through each gene in gene group
-	# get its ix from gene_dict
-	# set the value of it equal to zero based on gene group index and ix
+	# go through each group, for hallmark there are 50 groups
+	total = 0
+	for group_index, gene_group in enumerate(gene_groups):
+		# then go through each gene in that group
+		# genes not in that group should have weight of 0
+	
+		# get current row and use it as a list
+		layer_list = layer[group_index].tolist()
 		
-	group_count = 0
-	for group in gene_groups:
-		for gene in group:
-			# check if there is a different name for that gene
-			if gene in updated_gene_names.keys():
-				gene = updated_gene_names[gene]
-			try:
-				for index in gene_info[gene]:
-					layer[group_count, index] = 0
-			except:
-				pass
-		group_count += 1
+		gene_group_indices = get_gene_indicies(gene_group, gene_indexer, updated_gene_names) 
+		previous_gene = 0
+		for gene in gene_group_indices:
+			layer_list[previous_gene: gene + 1] = [0.0] * ((gene + 1) - previous_gene)
+		layer[group_index] = torch.LongTensor(layer_list)
 
 # NN class 
 class NN(nn.Module):
@@ -154,11 +171,12 @@ if __name__ == "__main__":
 	tumor_max = int(sys.argv[1])
 	normal_max = int(sys.argv[2])
 	training_data = []
-	add_to_data(training_data, tumor_max, normal_max)
+	add_to_data(training_data, tumor_max, normal_max, 0, 0)
 
 
 	
 	# set the starting weights to model the biology
+	print("Setting the weights of the model")
 	set_weights(model.state_dict())
 
 	# making a copy to see if changes are permanent
@@ -183,19 +201,17 @@ if __name__ == "__main__":
 			# apply learning to the model based on the instance
 			loss = loss_function(output, target)
 			loss.backward()
-			optimizer.step()
 			set_weights(model.state_dict())
+			optimizer.step()
 		sys.stdout.write("\r")
 		sys.stdout.flush()
 	
 	trained_dict = copy.deepcopy(model.state_dict())
 	trained = trained_dict[list(trained_dict.keys())[0]]
-	
-	print("Checking if model weights don't change")
-	print("Before:",untrained[49, 6298])
-	print("After:", trained[49, 6298])
-	print("Before:",untrained[49, 7076])
-	print("After:", trained[49, 7076])
+
+	print("Checking to see weighs are still zero")
+	print("Untrained | Trained")
+	print(untrained[8,3941], trained[8,3941])
 
 	print("Saving the model to file")
 	torch.save(model.state_dict(),"state_dicts/nn_partial_links.pt")

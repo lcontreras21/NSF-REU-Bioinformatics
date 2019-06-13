@@ -8,12 +8,11 @@ import torch.nn.functional as F
 import torch.optim as optim
 import sys
 import time
-from nn_partial_links import NN, add_to_data, make_gene_vector, make_target, label_to_ix
+from nn_partial_links import * 
 import random
-start_time = time.time()
+from datetime import timedelta
 
-normal_data = open("text_files/normal.txt", "r")
-tumor_data = open("text_files/tumor.txt", "r")
+start_time = time.monotonic()
 
 print("Importing the model from the saved location")
 input_size, output_size, hidden_size = 35728, 2, int(sys.argv[1])
@@ -29,12 +28,6 @@ tumor_data_size = int(sys.argv[2])
 normal_data_size = int(sys.argv[3])
 samples_per_trial = int(sys.argv[4])
 
-print("Removing data that was used to train the model from files")
-for i in range(tumor_data_size):
-	tumor_data.readline()
-for i in range(normal_data_size):
-	normal_data.readline()
-
 
 current_trial, trials = 1, 1
 
@@ -46,12 +39,16 @@ def test_model(model):
 	# keeping a count to test the accuracy of model
 	total_correct = 0
 	total_from_trials = 0
+	trials_pos, trials_neg = 0, 0
+	used_tumor = tumor_data_size
+	used_normal = normal_data_size
 	for trial in range(trials):	
 		testing_data = []
 		# test with even data to see results
-		add_to_data(testing_data, samples_per_trial, samples_per_trial)
+		add_to_data(testing_data, samples_per_trial, samples_per_trial, used_tumor, used_normal)
+		used_tumor += samples_per_trial
+		used_normal += samples_per_trial
 		random.shuffle(testing_data)
-		
 		print("Trial: ", trial + 1)
 		with torch.no_grad():
 			correct, total, index = 0, 0, 0
@@ -86,25 +83,25 @@ def test_model(model):
 		
 			# getting normal is considered True, tumor is False
 
-			# account for specificity and selectivity here
+			# account for specificity and sensitivity here
 			# sensitivity = true positive / total positive
-			# selectivity = true negative / total negative
+			# specificity = true negative / total negative
 			# true positive if predicted == actual
 			# true negative if predicted == actual
-
+			trials_pos += true_pos
+			trials_neg += true_neg
 			print("Sensitivity:", true_pos, "/", total_pos, "=", true_pos/total_pos)
-			print("Selectivity:", true_neg, "/", total_neg, "=", true_neg/total_neg)
+			print("Specificity:", true_neg, "/", total_neg, "=", true_neg/total_neg)
 			total_correct += correct
 			total_from_trials += total
 	percent_correct = total_correct / total_from_trials
 	print("Total Correct: ", total_correct, "/", total_from_trials, "=", percent_correct)
-
+	print("Overall Sensitivity: ", trials_pos, "/", total_from_trials / 2, "=", trials_pos / (total_from_trials / 2))
+	print("Overall Specificity: ", trials_neg, "/", total_from_trials / 2, "=", trials_neg / (total_from_trials / 2))
 print("Partial model")
 test_model(model_partial)
 print()
 print("Base model")
 test_model(model_base)
-
-print((time.time() - start_time) // 60)
-normal_data.close()
-tumor_data.close()
+end_time = time.monotonic()
+print("Runtime:", timedelta(seconds=end_time - start_time))
