@@ -13,39 +13,57 @@ gene_list = g.readline().split()
 HEADER = {'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'}
 
 def get_gene(string):
-	gene_index = string.index("gene=")
-	end_index = string.index('");')
-	return string[gene_index + 5: end_index]
+	gene_index = string.index("%3D")
+	end_index = string.index('&amp')
+	return string[gene_index + 3: end_index]
 
 def google(gene):
-	res = requests.get("https://search.yahoo.com/search?ei=UTF-8&fr=crmas&p=" + gene + "+genecards", headers=HEADER)
+	#res = requests.get("https://search.yahoo.com/search?ei=UTF-8&%20fr=crmas&p=" + gene + "+genecards", headers=HEADER)
+	res = requests.get("https://www.google.com/search?q=" + gene + "+genecards", headers=HEADER)
 	res.raise_for_status()
 	soup = bs4.BeautifulSoup(res.text, "html.parser")
-	link_elems = soup.select('.title a')
+	f = open("text_files/soup2.txt", "w")
+	f.write(str(soup))
+	f.close()
+	link_elems = soup.select('.r a')
 	# the above opens up a yahoo search page and gets the first 
 	# link which is 99 percent likely to be the one I want
-	res = requests.get(link_elems[0].get('href'), allow_redirects=True)
-	soup = bs4.BeautifulSoup(res.text, "html.parser")
+	#res = requests.get(link_elems[0].get('href'), allow_redirects=True)
+	#soup = bs4.BeautifulSoup(res.text, "html.parser")
+	#print(soup)
+	accounted_for = False
 	try:
-		new_name = get_gene(str(soup))
+		new_name = get_gene(str(link_elems[0]))
 	except:
 		print("Check this one manually:", gene)
+		accounted_for = True
 		new_name = "Check manually"
 		pass
-	print(new_name)
+	if not accounted_for:
+		print(new_name)
 	gene_names[gene] = new_name
 
 if __name__ == "__main__":
 	gene_names = {}
 	for gene in gene_list:
 		google(gene)
-		#time.sleep(0.5)
+	
+	# genes that need manual input
 	gene_names["SLMO2"] = "PRELID3B"
 	gene_names["SEPW1"] = "SELENOW"
 	gene_names["TARP"] = "CD3G"
 	gene_names["CRIPAK"] = "UVSSA"
 	gene_names["FTSJD2"] = "CMTR1"
 	gene_names["B1P1"] = "XBP1P1"
+	gene_names["EMR1"] = "ADGRE1"
+	gene_names["IKBKAP"] = "ELP1"
+	gene_names["C9orf95"] = "NMRK1"
+	gene_names["TMSL3"] = "TMSB4XP8"
+	gene_names["ACCN1"] = "ASIC2"
+	gene_names["PIGY"] = "PYURF"
+
+
+
 	from nn_partial_links import gene_dict
 	genes = gene_dict()
 	print("Genes that are still not accounted for.")

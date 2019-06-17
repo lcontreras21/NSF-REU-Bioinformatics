@@ -23,17 +23,14 @@ import pickle
 # adds data to a list for training or testing. Could add an 
 # even amount or uneven amount based on inputs.
 def add_to_data(data_set, tumor_max, normal_max, used_tumor, used_normal):
-	# good for adding data at once, bad for trial testing
 	normal_data = open("text_files/normal.txt", "r")
 	tumor_data = open("text_files/tumor.txt", "r")
-	
 	if used_tumor > 0:
 		for i in range(used_tumor):
 			tumor_data.readline()
 	if used_normal > 0:
 		for i in range(used_normal):
 			normal_data.readline()
-	
 	tumors = 0
 	normals = 0
 	while tumors < tumor_max:
@@ -81,6 +78,7 @@ def gene_dict():
 # should probably make this dynamic for other files
 def import_gene_groups():
 	f = open("text_files/h.all.v6.2.symbols.txt", "r")
+	#f = open("text_files/c2.cp.kegg.v6.2.symbols.txt", "r")
 	gene_groups = []
 	for line in f:
 		gene_data = line.split()
@@ -89,7 +87,10 @@ def import_gene_groups():
 	f.close()
 	return gene_groups
 
-def get_gene_indicies(gene_group, gene_indexer, alternate_names):
+def get_gene_indicies(gene_group, gene_indexer):
+	f = open("text_files/gene_pairs.pickle", "rb")
+	alternate_names = pickle.load(f)
+	f.close()
 	indices = []
 	for gene in gene_group:
 		try:
@@ -109,9 +110,7 @@ def set_weights(model_state):
 	gene_groups = import_gene_groups()
 	gene_indexer = gene_dict()
 
-	f = open("text_files/gene_pairs.pickle", "rb")
-	updated_gene_names = pickle.load(f)
-	f.close()
+
 	# we are interested in the first layer in model_state
 	layer = model_state[list(model_state)[0]]
 	# this returns a tensor of dimension (size of gene_group, size of input)
@@ -125,7 +124,7 @@ def set_weights(model_state):
 		# get current row and use it as a list
 		layer_list = layer[group_index].tolist()
 		
-		gene_group_indices = get_gene_indicies(gene_group, gene_indexer, updated_gene_names) 
+		gene_group_indices = get_gene_indicies(gene_group, gene_indexer) 
 		previous_gene = 0
 		for gene in gene_group_indices:
 			layer_list[previous_gene: gene + 1] = [0.0] * ((gene + 1) - previous_gene)
