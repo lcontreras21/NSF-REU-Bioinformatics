@@ -18,13 +18,16 @@ import random
 import copy
 import pickle
 
+# settings file that has what files to use and hyperparameters
+from settings import *
+
 # functions that I have used, plus new functions to read files.
 
 # adds data to a list for training or testing. Could add an 
 # even amount or uneven amount based on inputs.
 def add_to_data(data_set, tumor_max, normal_max, used_tumor, used_normal):
-	normal_data = open("text_files/normal.txt", "r")
-	tumor_data = open("text_files/tumor.txt", "r")
+	normal_data = open(text_file_normal, "r")
+	tumor_data = open(text_file_tumor, "r")
 	if used_tumor > 0:
 		for i in range(used_tumor):
 			tumor_data.readline()
@@ -60,25 +63,21 @@ def make_gene_vector(file_line):
 # makes a dictionary for gene index to be able to connect nodes
 def gene_dict():
 	#f = open("\subset_0.1_logged_scaled_rnaseq_hk_normalized.txt", "r")
-	f = open("text_files/logged_scaled_rnaseq.txt", "r")
+	f = open(text_data, "r")
 	gene_names = f.readline().split()
 	f.close()
 
 	gene_to_index = {}
-	index = 0
-	for gene_name in gene_names[1:-1]:
+	for index, gene_name in enumerate(gene_names[1:-1]):
 		if gene_name not in gene_to_index:
 			gene_to_index[gene_name] = [index]
 		else:
 			gene_to_index[gene_name] = gene_to_index[gene_name] +[index]
-		index += 1
 	return gene_to_index
 
 # import hallmark gene data
-# should probably make this dynamic for other files
 def import_gene_groups():
-	f = open("text_files/h.all.v6.2.symbols.txt", "r")
-	#f = open("text_files/c2.cp.kegg.v6.2.symbols.txt", "r")
+	f = open(text_gene_groups, "r")
 	gene_groups = []
 	for line in f:
 		gene_data = line.split()
@@ -110,7 +109,6 @@ def set_weights(model_state):
 	gene_groups = import_gene_groups()
 	gene_indexer = gene_dict()
 
-
 	# we are interested in the first layer in model_state
 	layer = model_state[list(model_state)[0]]
 	# this returns a tensor of dimension (size of gene_group, size of input)
@@ -123,12 +121,18 @@ def set_weights(model_state):
 	
 		# get current row and use it as a list
 		layer_list = layer[group_index].tolist()
-		
+	
+		# list containing which indices to keep
 		gene_group_indices = get_gene_indicies(gene_group, gene_indexer) 
+		gene_group_indices += [len(layer_list)]
 		previous_gene = 0
+
+		# using python list manipulation to quickly set which genes to zero based on the gene indices.
 		for gene in gene_group_indices:
-			layer_list[previous_gene: gene + 1] = [0.0] * ((gene + 1) - previous_gene)
+			layer_list[previous_gene: gene] = [0.0] * (gene - previous_gene)
+			previous_gene = gene + 1
 		layer[group_index] = torch.LongTensor(layer_list)
+		
 
 # NN class 
 class NN(nn.Module):
@@ -148,16 +152,11 @@ if __name__ == "__main__":
 	start_time = time.monotonic()
 
 	### Hyperparameters
-	input_size = 35728
-	print(input_size)
-	output_size = 2
-	num_epochs = 3
 	hidden_size = len(import_gene_groups()) 
-	learning_rate = 0.01
 	
 	# terminal message to track work
-	print("Building model trained on", sys.argv[1], "Tumor and", sys.argv[2], "Normal samples.")
-	print("Hyperparameters:", num_epochs, "epochs,", hidden_size, "neurons in hidden layer,", learning_rate, "learning rate")
+	print("Building the partial model trained on the", mode, tumor_data_size, "Tumor and", normal_data_size, "Normal samples.")
+	print("Hyperparameters:", num_epochs, "epochs,", hidden_size, "neurons in the hidden layer,", learning_rate, "learning rate.")
 
 	model = NN(input_size, hidden_size, output_size)
 	model = model.train()
@@ -167,10 +166,8 @@ if __name__ == "__main__":
 	# get data size from the terminal and make practice training set
 	## todo: make separate files for training and testing to reduce
 	## this constant loading and configuring
-	tumor_max = int(sys.argv[1])
-	normal_max = int(sys.argv[2])
 	training_data = []
-	add_to_data(training_data, tumor_max, normal_max, 0, 0)
+	add_to_data(training_data, tumor_data_size, normal_data_size, 0, 0)
 
 
 	
@@ -216,3 +213,4 @@ if __name__ == "__main__":
 	torch.save(model.state_dict(),"state_dicts/nn_partial_links.pt")
 	end_time = time.monotonic()
 	print("Runtime:", timedelta(seconds=end_time - start_time))
+	print()

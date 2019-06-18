@@ -12,10 +12,12 @@ from nn_partial_links import *
 import random
 from datetime import timedelta
 
+from settings import *
+
 start_time = time.monotonic()
 
 print("Importing the model from the saved location")
-input_size, output_size, hidden_size = 35728, 2, int(sys.argv[1])
+input_size, output_size, hidden_size = input_size, 2, hidden_size
 model_partial = NN(input_size, hidden_size, output_size)
 model_partial.load_state_dict(torch.load("state_dicts/nn_partial_links.pt"))
 model_partial.eval()
@@ -24,28 +26,26 @@ model_base = NN(input_size, hidden_size, output_size)
 model_base.load_state_dict(torch.load("state_dicts/nn_base.pt"))
 model_base.eval()
 
-tumor_data_size = int(sys.argv[2])
-normal_data_size = int(sys.argv[3])
-samples_per_trial = int(sys.argv[4])
 
 
-current_trial, trials = 1, 1
+current_trial = 1
 
-# if we are given trials as input, use that, otherwise use default 1
-if len(sys.argv) == 6:
-	trials = int(sys.argv[5])
 print("Testing accuracy of model with trial count of: ", trials)
 def test_model(model):
 	# keeping a count to test the accuracy of model
 	total_correct = 0
 	total_from_trials = 0
 	trials_pos, trials_neg = 0, 0
-	used_tumor = tumor_data_size
-	used_normal = normal_data_size
+	#used_tumor = tumor_data_size
+	#used_normal = normal_data_size
+	# for full train/test purposes
+	used_tumor = 0
+	used_normal = 0
+	### TODO fix this interaction
 	for trial in range(trials):	
 		testing_data = []
 		# test with even data to see results
-		add_to_data(testing_data, samples_per_trial, samples_per_trial, used_tumor, used_normal)
+		add_to_data(testing_data, tumor_data_size, normal_data_size, used_tumor, used_normal)
 		used_tumor += samples_per_trial
 		used_normal += samples_per_trial
 		random.shuffle(testing_data)

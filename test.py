@@ -1,7 +1,7 @@
 import torch
 import torch.optim as optim
 import pickle
-
+import numpy as np
 from nn_partial_links import * 
 '''
 hallmark = open("text_files/h.all.v6.2.symbols.txt", "r")
@@ -75,8 +75,9 @@ for key, value in names.items():
 		count += 1
 print(count)
 
+'''
 
-
+'''
 # making alternate data set with only the genes in hallmark
 gene_groups = import_gene_groups()
 
@@ -92,16 +93,23 @@ genes_dict = gene_dict()
 
 #getting indices from unique genes, it is sorted
 gene_indices = get_gene_indicies(genes, genes_dict)
+gene_indices = [0] + gene_indices + [len(gene_groups[0]) - 1]
 f = open("text_files/logged_scaled_rnaseq.txt", "r")
 # open new file for subset of data
 g = open("text_files/subset_logged_scaled_rnaseq.txt", "w")
-
+index = 0
 for line in f:
+	if index % 100 == 0:
+		print(index)
+	index += 1
 	data = line.split()
 	# remove entries from list that aren't necessary
 	new_data = []
-	for index in gene_indices:
-		new_data = new_data + [data[index]]
+	prev = 0
+	for item in gene_indices:
+		data[prev: item] = [0] * (item - prev)
+		prev = item + 1
+	new_data = list(filter((0).__ne__, data)) 
 	to_write = "\t".join(new_data)
 	g.write(to_write+"\n")
 	
@@ -111,6 +119,7 @@ g.close()
 '''
 
 
+'''
 # create files for tumor data and normal data based on subset
 #### TODO preserver tumor/normal information in the above chunk of code
 f = open("text_files/subset_logged_scaled_rnaseq.txt", "r")
@@ -132,4 +141,111 @@ print(tumor, normal)
 f.close()
 g.close()
 h.close()
+'''
+
+'''
+# keeping track of gene names in the subset data
+f = open("text_files/subset_logged_scaled_rnaseq.txt", "r")
+g = open("text_files/subset_gene_names.txt", "w")
+
+data = f.readline()
+g.write(data)
+
+f.close()
+g.close()
+'''
+'''
+# making training data for full and subset to be used for 80 - 20
+f = open("text_files/full_normal_samples.txt", "r")
+g = open("text_files/full_tumor_samples.txt", "r")
+
+h = open("text_files/full_train_normal_samples.txt", "w")
+i = open("text_files/full_train_tumor_samples.txt", "w")
+j = open("text_files/full_test_normal_samples.txt", "w")
+k = open("text_files/full_test_tumor_samples.txt", "w")
+
+index = 0
+for x in range(7975): # train tumor set
+	line = g.readline()
+	i.write(line)
+	index +=1 
+print(index)
+index = 0
+for x in range(1994): # test tumor set
+	line = g.readline()
+	k.write(line)
+	index +=1 
+print(index)
+index = 0
+for x in range(584): # train normal set
+	line = f.readline()
+	h.write(line)
+	index +=1 
+print(index)
+index = 0
+for x in range(146): # test normal set
+	line = f.readline()
+	j.write(line)
+	index +=1 
+print(index)
+index = 0
+
+f.close()
+g.close()
+h.close()
+i.close()
+j.close()
+k.close()
+
+
+'''
+
+
+'''
+
+#make subset train and test dataset
+f = open("text_files/subset_normal_samples.txt", "r")
+g = open("text_files/subset_tumor_samples.txt", "r")
+
+h = open("text_files/subset_train_normal_samples.txt", "w")
+i = open("text_files/subset_train_tumor_samples.txt", "w")
+j = open("text_files/subset_test_normal_samples.txt", "w")
+k = open("text_files/subset_test_tumor_samples.txt", "w")
+
+index = 0
+for x in range(7975): # train tumor set
+	line = g.readline()
+	i.write(line)
+	index +=1 
+print(index)
+index = 0
+for x in range(1994): # test tumor set
+	line = g.readline()
+	k.write(line)
+	index +=1 
+print(index)
+index = 0
+for x in range(584): # train normal set
+	line = f.readline()
+	h.write(line)
+	index +=1 
+print(index)
+index = 0
+for x in range(146): # test normal set
+	line = f.readline()
+	j.write(line)
+	index +=1 
+print(index)
+index = 0
+
+f.close()
+g.close()
+h.close()
+i.close()
+j.close()
+k.close()
+'''
+
+
+
 

@@ -11,7 +11,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 import sys
 import time
+from datetime import timedelta
 import random
+from settings import *
+
 
 def add_to_data_uneven(data_set, tumor_max, normal_max, normal_data, tumor_data):
 	have_n_tumors = 0
@@ -51,43 +54,24 @@ def make_target(label, label_to_ix):
 label_to_ix = {"Tumor": 0, "Normal": 1}
 
 if __name__ == "__main__":
-	start_time = time.time()
-	# read in the file for gene
-	#f = open("..\subset_0.1_logged_scaled_rnaseq_hk_normalized.txt", "r")
-	#gene_info = f.readline().split()
-	
-	# convert gene location to integer value
-	#gene_to_ix = {}
-	#for gene_name in gene_info[1:-1]:
-	#	if gene_name not in gene_to_ix:
-	#		gene_to_ix[gene_name] = len(gene_to_ix)
-	#f.close()
-	
+	start_time = time.monotonic()
 
 	# hyper parameters
-	input_size = 35728 
-	output_size = 2
-	num_epochs = 3 
 	hidden_size = 50
-	learning_rate = 0.01
 
 	# text files for normal and tumor data
-	normal_data = open("text_files/normal.txt", "r")
-	tumor_data = open("text_files/tumor.txt", "r")
+	normal_data = open(text_file_normal, "r")
+	tumor_data = open(text_file_tumor, "r")
 	print("Loading the data")
 	
 	training_data = []
-	tumor_data_size = int(sys.argv[1])
-	normal_data_size = int(sys.argv[2])
-	
 	add_to_data_uneven(training_data, tumor_data_size, normal_data_size,  normal_data, tumor_data)
 
 	normal_data.close()
 	tumor_data.close()
 
-	print("Building the model trained on", tumor_data_size, "-", normal_data_size, "input, with", num_epochs, "epochs and", hidden_size, "neurons in the hidden layer.")
-	print("Learning rate is", learning_rate)
-
+	print("Building the base model trained on", tumor_data_size, "Tumor and", normal_data_size, "Normal samples.")
+	print("Hyperparameters:", num_epochs, "epochs,", hidden_size, "neurons in the hidden layer,", learning_rate, "learning rate.")
 	# building the model and loading other functions
 	model = NN(output_size, hidden_size, input_size)
 	model = model.train()
@@ -117,4 +101,5 @@ if __name__ == "__main__":
 		sys.stdout.flush()
 	print("Saving the model to file")
 	torch.save(model.state_dict(), "state_dicts/nn_base.pt")
-	print("Time elapsed: ", (time.time() - start_time) // 60)
+	print("Time elapsed: ", timedelta(seconds=time.monotonic() - start_time))
+	print()
