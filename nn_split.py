@@ -20,6 +20,7 @@ from datetime import timedelta
 import random
 import copy
 import pickle
+from tqdm import tqdm
 
 # settings file that has what files to use and hyperparameters
 from settings import *
@@ -104,46 +105,49 @@ def get_gene_indicies(gene_group, gene_indexer):
 	indices.sort()
 	return indices
 
-def split_data(input_vector, gene_groups):
+def split_data(input_vector, gene_group_indicies):
 	input_vector = input_vector.tolist()[0]
 	split = [] # should be of length of gene_groups
-	gene_indexer = gene_dict()
-	for gene_group in gene_groups:
-		gene_group_indices = get_gene_indicies(gene_group, gene_indexer)
-		subset = list(map(input_vector.__getitem__, gene_group_indices))
+	for group_indexes in gene_group_indicies:
+		subset = list(map(input_vector.__getitem__, group_indexes))
 		split.append(subset)
 	return split
 
 # NN class 
-class NN(nn.Module):
+class NN_split(nn.Module):
 	def __init__(self, hidden_size, output_size):
-		super(NN, self).__init__()
-		# no longer care about input size, it will be variable
-		# number of linear layers is based on hidden size
-		fc = [] #should be length of hidden_size 
-		
-		# need gene group data lengths to make layers
-		group_lengths = []
-		self.gene_groups = import_gene_groups()
+		super(NN_split, self).__init__()
+		self.gene_group_indicies = []
+		fc = []  
 		gene_indexes = gene_dict()
-		for gene_group in self.gene_groups:
-			group_lengths.append(get_gene_indicies(gene_group, gene_indexes))
-		for i in range(hidden_size):
-			fc.append(nn.Linear(len(group_lengths[i]), 1))
+		gene_groups = import_gene_groups()
+		for gene_group in gene_groups:
+			group_indices = get_gene_indicies(gene_group, gene_indexes)
+			self.gene_group_indicies.append(group_indices)
+			# creates linear layers that has input
+			# of gene group size and outputs a 
+			# tensor of size 1
+			fc.append(nn.Linear(len(group_indices), 1))
+
 		self.linears = nn.ModuleList(fc)
 		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(hidden_size, 2)
+	
 	def forward(self, input_vector):
+		hidden = [] # list of tensors
 		# here we must split the input_vector and active it
-		# using the specific group
-		hidden = []
-		input_split = split_data(input_vector, self.gene_groups)
-		for i in range(hidden_size):
-			x = torch.FloatTensor(input_split[i])
-			hidden.append(self.linears[i](x))
+		# using the specific linear function it belongs to
+		input_split = split_data(input_vector, self.gene_group_indicies)
+		for index, layer in enumerate(self.linears):
+			x = torch.FloatTensor(input_split[index])
+			hidden.append(layer(x))
+		
+		# concatenate all the linear layers to make a 
+		# tensor with size of gene groups
 		hidden = torch.stack(hidden, 1)
 		out = self.relu(hidden)
-		out= self.fc2(out)
+		# now take the output as normal
+		out = self.fc2(out)
 		return out
 
 
@@ -155,24 +159,33 @@ if __name__ == "__main__":
 	hidden_size = len(import_gene_groups()) 
 	
 	# terminal message to track work
-	print("Building the partial model trained on the", mode, tumor_data_size, "Tumor and", normal_data_size, "Normal samples.")
-	print("Hyperparameters:", num_epochs, "epochs,", hidden_size, "neurons in the hidden layer,", learning_rate, "learning rate.")
+	print("Building the split model trained on the", mode, 
+			tumor_data_size, "Tumor and", 
+			normal_data_size, "Normal samples.", flush=True)
+	print("Hyperparameters:", 
+			num_epochs, "epochs,", 
+			hidden_size, "neurons in the hidden layer,", 
+			learning_rate, "learning rate.", flush=True)
 
-	model = NN(hidden_size, output_size)
+	model = NN_split(hidden_size, output_size)
 	model = model.train()
 	loss_function = nn.CrossEntropyLoss()
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-	## this constant loading and configuring
+	print("Loading the data", end='', flush=True)
 	training_data = []
 	add_to_data(training_data, tumor_data_size, normal_data_size, 0, 0)
-
+	sys.stdout.write("\r")
+	sys.stdout.flush()
+	print("Loaded the data ", flush=True)
+	
 	# train the model
 	print("Training the model")
-	for epoch in range(num_epochs):
-		print(epoch + 1, "out of", num_epochs, end="", flush=True)
+	for epoch in tqdm(range(num_epochs)):
 		random.shuffle(training_data)
-		for instance, label in training_data:
+		for i in tqdm(range(len(training_data))):
+			instance, label = training_data[i]
+			
 			# erase gradients from previous run
 			model.zero_grad()
 			
@@ -186,14 +199,12 @@ if __name__ == "__main__":
 			loss = loss_function(output, target)
 			loss.backward()
 			optimizer.step()
-		sys.stdout.write("\r")
-		sys.stdout.flush()
 	
 	trained_dict = copy.deepcopy(model.state_dict())
 	trained = trained_dict[list(trained_dict.keys())[0]]
 
 	print("Saving the model to file")
-	torch.save(model.state_dict(),"state_dicts/nn_split.pt")
+	torch.save(model.state_dict(), split_dict)
 	end_time = time.monotonic()
 	print("Runtime:", timedelta(seconds=end_time - start_time))
 	print()

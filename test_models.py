@@ -8,7 +8,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 import sys
 import time
-from nn_partial_links import * 
 import random
 from datetime import timedelta
 
@@ -16,17 +15,20 @@ from settings import *
 
 start_time = time.monotonic()
 
-print("Importing the model from the saved location")
+print("Importing the models from the saved location")
 input_size, output_size, hidden_size = input_size, 2, hidden_size
 model_partial = NN(input_size, hidden_size, output_size)
-model_partial.load_state_dict(torch.load("state_dicts/nn_partial_links.pt"))
+model_partial.load_state_dict(torch.load(partial_dict))
+
+model_dense = NN(input_size, hidden_size, output_size)
+model_dense.load_state_dict(torch.load(dense_dict))
+
+model_split = NN_split(hidden_size, output_size)
+model_split.load_state_dict(torch.load(split_dict))
+
+model_dense.eval()
 model_partial.eval()
-
-model_base = NN(input_size, hidden_size, output_size)
-model_base.load_state_dict(torch.load("state_dicts/nn_base.pt"))
-model_base.eval()
-
-
+model_split.eval()
 
 current_trial = 1
 
@@ -36,16 +38,15 @@ def test_model(model):
 	total_correct = 0
 	total_from_trials = 0
 	trials_pos, trials_neg = 0, 0
-	#used_tumor = tumor_data_size
-	#used_normal = normal_data_size
-	# for full train/test purposes
-	used_tumor = 0
-	used_normal = 0
-	### TODO fix this interaction
+	used_tumor = tumor_data_size 
+	used_normal = normal_data_size
 	for trial in range(trials):	
 		testing_data = []
 		# test with even data to see results
-		add_to_data(testing_data, tumor_data_size, normal_data_size, used_tumor, used_normal)
+		if mode[0] != "t":
+			add_to_data(testing_data, samples_per_trial, samples_per_trial, used_tumor, used_normal)
+		else:
+			add_to_data(testing_data, tumor_data_size, normal_data_size, 0, 0)
 		used_tumor += samples_per_trial
 		used_normal += samples_per_trial
 		random.shuffle(testing_data)
@@ -98,10 +99,19 @@ def test_model(model):
 	print("Total Correct: ", total_correct, "/", total_from_trials, "=", percent_correct)
 	print("Overall Sensitivity: ", trials_pos, "/", total_from_trials / 2, "=", trials_pos / (total_from_trials / 2))
 	print("Overall Specificity: ", trials_neg, "/", total_from_trials / 2, "=", trials_neg / (total_from_trials / 2))
-print("Partial model")
+
+print()
+print("Zero-weights model")
 test_model(model_partial)
 print()
-print("Base model")
-test_model(model_base)
+
+print("Dense model")
+test_model(model_dense)
+print()
+
+print("Split model")
+test_model(model_split)
+print()
+
 end_time = time.monotonic()
 print("Runtime:", timedelta(seconds=end_time - start_time))

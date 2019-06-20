@@ -9,12 +9,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+
 import sys
 import time
 from datetime import timedelta
 import random
 from settings import *
-
+from tqdm import tqdm
 
 def add_to_data_uneven(data_set, tumor_max, normal_max, normal_data, tumor_data):
 	have_n_tumors = 0
@@ -70,8 +71,14 @@ if __name__ == "__main__":
 	normal_data.close()
 	tumor_data.close()
 
-	print("Building the base model trained on", tumor_data_size, "Tumor and", normal_data_size, "Normal samples.")
-	print("Hyperparameters:", num_epochs, "epochs,", hidden_size, "neurons in the hidden layer,", learning_rate, "learning rate.")
+	print("Building the dense model trained on the", mode,
+			tumor_data_size, "Tumor and", 
+			normal_data_size, "Normal samples.")
+	print("Hyperparameters:", 
+			num_epochs, "epochs,", 
+			hidden_size, "neurons in the hidden layer,", 
+			learning_rate, "learning rate.")
+
 	# building the model and loading other functions
 	model = NN(output_size, hidden_size, input_size)
 	model = model.train()
@@ -79,10 +86,11 @@ if __name__ == "__main__":
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 	print("Training the model")
-	for epoch in range(num_epochs):
-		print(epoch + 1, "out of", num_epochs, end="")
+	for epoch in tqdm(range(num_epochs)):
 		random.shuffle(training_data)
-		for instance, label in training_data:
+		for i in tqdm(range(len(training_data))):
+			instance, label = training_data[i]
+			
 			# erasing gradients from previous run
 			model.zero_grad()
 			
@@ -97,9 +105,7 @@ if __name__ == "__main__":
 			loss.backward()
 			optimizer.step()
 		# progress tracker
-		sys.stdout.write("\r")
-		sys.stdout.flush()
 	print("Saving the model to file")
-	torch.save(model.state_dict(), "state_dicts/nn_base.pt")
+	torch.save(model.state_dict(), dense_dict)
 	print("Time elapsed: ", timedelta(seconds=time.monotonic() - start_time))
 	print()
