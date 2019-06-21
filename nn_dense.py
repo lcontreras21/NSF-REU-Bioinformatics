@@ -30,19 +30,20 @@ def add_to_data_uneven(data_set, tumor_max, normal_max, normal_data, tumor_data)
 		data_set += [(next_line[1:-1], next_line[-1])]
 		have_n_normals += 1
 
-class NN(nn.Module):
-	def __init__(self, num_labels, hidden_size, gene_size):
-		super(NN, self).__init__()
-		self.fc1 = nn.Linear(gene_size, hidden_size)
+class NN_dense(nn.Module):
+	def __init__(self, gene_size, hidden_size, num_labels):
+		super(NN_dense, self).__init__()
+		self.fc1 = nn.Linear(gene_size, hidden_size * 3)
 		self.relu = nn.ReLU()
-		self.fc2 = nn.Linear(hidden_size, num_labels)
+		self.fc2 = nn.Linear(hidden_size * 3, num_labels)
 		#self.fc1 = nn.Linear(gene_size, num_labels)	
 	def forward(self, gene_vec):
 		out = self.fc1(gene_vec)
 		out = self.relu(out)
 		out = self.fc2(out)
-		#out = F.log_softmax(out, dim=1)
+		out = F.log_softmax(out, dim=1)
 		return out
+
 def make_gene_vector(file_line, input_size):
 	data = list(map(float, file_line))
 	vec = torch.FloatTensor(data)
@@ -80,7 +81,7 @@ if __name__ == "__main__":
 			learning_rate, "learning rate.")
 
 	# building the model and loading other functions
-	model = NN(output_size, hidden_size, input_size)
+	model = NN_dense(input_size, hidden_size, output_size)
 	model = model.train()
 	loss_function = nn.CrossEntropyLoss()
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate)

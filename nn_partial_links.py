@@ -134,7 +134,9 @@ class NN(nn.Module):
 		out = self.fc1(input_vector)
 		out = self.relu(out)
 		out = self.fc2(out)
+		out = F.log_softmax(out, dim=1)
 		return out
+		
 
 
 if __name__ == "__main__":

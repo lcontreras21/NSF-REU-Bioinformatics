@@ -245,7 +245,71 @@ i.close()
 j.close()
 k.close()
 '''
+'''
+# find missing genes in kegg
+
+f = open("text_files/c2.cp.kegg.v6.2.symbols.txt", "r")
+g = open("text_files/full_gene_names.txt", "r")
+j = open("text_files/h.all.v6.2.symbols.txt", "r")
+groups = []
+for line in f:
+	groups.append(line.split()[2:])
+
+for line in j:
+	groups.append(line.split()[2:])
+x = g.readline().split()
+
+f.close()
+g.close()
+j.close()
+
+count = 0
+missing_genes = []
+for group in groups:
+	for gene in group:
+		if gene not in x and gene not in missing_genes:
+			missing_genes.append(gene)
+			count += 1
+#k = open("text_files/missing_genes_kegg.txt", "w")
+#k.write("\t".join(missing_genes))
+print(count)
+print(missing_genes)
+#k.close()
+'''
+
+gene_file = open("text_files/gene_pairs.pickle", "rb")
+x = pickle.load(gene_file)
+gene_file.close()
+f = open("text_files/missing_genes_unique.txt", "r")
+y = f.readline().split()
+f.close()
 
 
+def gene_dict():
+	f = open("text_files/logged_scaled_rnaseq.txt", "r")
+	gene_names = f.readline().split()
+	f.close()
 
+	gene_to_index = {}
+	for index, gene_name in enumerate(gene_names[1:-1]):
+		if gene_name not in gene_to_index:
+			gene_to_index[gene_name] = [index]
+		else:
+			gene_to_index[gene_name] = gene_to_index[gene_name] + [index]
+	return gene_to_index
+dicti = gene_dict()
+missing_genes = []
+count = 0
+for gene in y:
+	if x[gene] != "Check manually":
+		gene = x[gene]
+	try:
+		dicti[gene]
+	except:
+		missing_genes.append(gene)
+		count += 1
+print(count)
+#x = open("text_files/actual_missing_genes.txt", "w")
+#x.write("\t".join(missing_genes))
+#x.close()
 

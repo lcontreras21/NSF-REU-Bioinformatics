@@ -148,6 +148,7 @@ class NN_split(nn.Module):
 		out = self.relu(hidden)
 		# now take the output as normal
 		out = self.fc2(out)
+		out = F.log_softmax(out, dim=1)
 		return out
 
 

@@ -10,17 +10,32 @@ import sys
 import time
 import random
 from datetime import timedelta
+from tqdm import tqdm
 
 from settings import *
 
 start_time = time.monotonic()
 
-print("Importing the models from the saved location")
+# Setting text files and other stuff to use
+if mode != "free":
+	if data == "full":
+		text_file_normal = train_dir + "full_train_normal_samples.txt" 
+		text_file_tumor = train_dir + "full_train_tumor_samples.txt"
+		text_data = logged
+	elif data == "subset":
+		text_file_normal = train_dir + "subset_train_normal_samples.txt"
+		text_file_tumor = train_dir + "subset_train_tumor_samples.txt"
+		text_data = subset_logged
+		input_size = 4579
+	
+	tumor_data_size = 1994
+	normal_data_size = 146
+
 input_size, output_size, hidden_size = input_size, 2, hidden_size
 model_partial = NN(input_size, hidden_size, output_size)
 model_partial.load_state_dict(torch.load(partial_dict))
 
-model_dense = NN(input_size, hidden_size, output_size)
+model_dense = NN_dense(input_size, hidden_size, output_size)
 model_dense.load_state_dict(torch.load(dense_dict))
 
 model_split = NN_split(hidden_size, output_size)
@@ -32,7 +47,7 @@ model_split.eval()
 
 current_trial = 1
 
-print("Testing accuracy of model with trial count of: ", trials)
+print("Testing accuracy of model using", data, "with trial count of: ", trials)
 def test_model(model):
 	# keeping a count to test the accuracy of model
 	total_correct = 0
@@ -52,16 +67,11 @@ def test_model(model):
 		random.shuffle(testing_data)
 		print("Trial: ", trial + 1)
 		with torch.no_grad():
-			correct, total, index = 0, 0, 0
+			correct, total, =  0, 0
 			true_pos, true_neg = 0, 0
 			total_pos, total_neg = 0, 0
-			increment = len(testing_data) // 10
-			if increment == 0:
-				increment = 10
-			for instance, label in testing_data:
-				if index % increment == 0:
-					print("-" * (index // increment), end="")
-				index += 1
+			for i in tqdm(range(len(testing_data))):
+				instance, label = testing_data[i]
 				
 				gene_vec = make_gene_vector(instance)
 				target = make_target(label, label_to_ix)
@@ -91,14 +101,22 @@ def test_model(model):
 			# true negative if predicted == actual
 			trials_pos += true_pos
 			trials_neg += true_neg
-			print("Sensitivity:", true_pos, "/", total_pos, "=", true_pos/total_pos)
-			print("Specificity:", true_neg, "/", total_neg, "=", true_neg/total_neg)
+			#print("Sensitivity:", true_pos, "/", total_pos, "=", true_pos/total_pos)
+			#print("Specificity:", true_neg, "/", total_neg, "=", true_neg/total_neg)
+			
+			print(true_pos/total_pos)
+			print(true_neg/total_neg)
+			
 			total_correct += correct
 			total_from_trials += total
 	percent_correct = total_correct / total_from_trials
-	print("Total Correct: ", total_correct, "/", total_from_trials, "=", percent_correct)
-	print("Overall Sensitivity: ", trials_pos, "/", total_from_trials / 2, "=", trials_pos / (total_from_trials / 2))
-	print("Overall Specificity: ", trials_neg, "/", total_from_trials / 2, "=", trials_neg / (total_from_trials / 2))
+	#print("Total Correct: ", total_correct, "/", total_from_trials, "=", percent_correct)
+	print(percent_correct)
+	if mode != "free":
+		pass
+	else:
+		print("Overall Sensitivity: ", trials_pos, "/", total_from_trials / 2, "=", trials_pos / (total_from_trials / 2))
+		print("Overall Specificity: ", trials_neg, "/", total_from_trials / 2, "=", trials_neg / (total_from_trials / 2))
 
 print()
 print("Zero-weights model")

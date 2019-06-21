@@ -8,7 +8,7 @@ from nn_partial_links import gene_dict
 
 partial_link = "https://www.genecards.org/cgi-bin/carddisp.pl?gene="
 
-g = open("text_files/missing_genes.txt", "r")
+g = open("text_files/missing_genes_unique.txt", "r")
 gene_list = g.readline().split()
 HEADER = {'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.7) Gecko/2009021910 Firefox/3.0.7'}
 
@@ -22,25 +22,18 @@ def google(gene):
 	res = requests.get("https://www.google.com/search?q=" + gene + "+genecards", headers=HEADER)
 	res.raise_for_status()
 	soup = bs4.BeautifulSoup(res.text, "html.parser")
-	f = open("text_files/soup2.txt", "w")
-	f.write(str(soup))
-	f.close()
 	link_elems = soup.select('.r a')
-	# the above opens up a yahoo search page and gets the first 
-	# link which is 99 percent likely to be the one I want
-	#res = requests.get(link_elems[0].get('href'), allow_redirects=True)
-	#soup = bs4.BeautifulSoup(res.text, "html.parser")
-	#print(soup)
 	accounted_for = False
 	try:
 		new_name = get_gene(str(link_elems[0]))
+		print(gene, new_name)
 	except:
-		print("Check this one manually:", gene)
+		print("not found", gene)
 		accounted_for = True
 		new_name = "Check manually"
 		pass
-	if not accounted_for:
-		print(new_name)
+	#if not accounted_for:
+	#	print(new_name)
 	gene_names[gene] = new_name
 
 if __name__ == "__main__":
@@ -64,16 +57,16 @@ if __name__ == "__main__":
 
 
 
-	from nn_partial_links import gene_dict
-	genes = gene_dict()
 	print("Genes that are still not accounted for.")
+	g = open("text_files/full_gene_names.txt")
+	x = g.readline().split()
 	for gene in gene_names:
-		try:
-			genes[gene_names[gene]]
-		except:
-			print(gene)
-	
-	print("Saving gene name pairs to file")
-	gene_file = open("text_files/gene_pairs.pickle", "wb")
-	pickle.dump(gene_names, gene_file)
-	gene_file.close()
+		if gene_names[gene] not in x:
+			print(gene, gene_names[gene])
+
+
+
+	#print("Saving gene name pairs to file")
+	#gene_file = open("text_files/gene_pairs.pickle", "wb")
+	#pickle.dump(gene_names, gene_file)
+	#gene_file.close()
