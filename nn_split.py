@@ -201,9 +201,7 @@ if __name__ == "__main__":
 			loss.backward()
 			optimizer.step()
 	
-	trained_dict = copy.deepcopy(model.state_dict())
-	trained = trained_dict[list(trained_dict.keys())[0]]
-
+	print()
 	print("Saving the model to file")
 	torch.save(model.state_dict(), split_dict)
 	end_time = time.monotonic()

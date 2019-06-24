@@ -2,10 +2,6 @@
 # to the input based on gene groups. ie not all nodes
 # are connected
 
-# this will be the beginning of the full project 
-# probably not the final file but a lot of original code
-# will go here for simplicity and to avoid copying
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -181,7 +177,6 @@ if __name__ == "__main__":
 	# train the model
 	print("Training the model")
 	for epoch in tqdm(range(num_epochs)):
-		#print(epoch + 1, "out of", num_epochs, end="", flush=True)
 		
 		random.shuffle(training_data)
 		for i in tqdm(range(len(training_data))):
@@ -200,6 +195,8 @@ if __name__ == "__main__":
 			loss.backward()
 			set_weights(model.state_dict(), gene_groups, gene_group_indicies)
 			optimizer.step()
+	
+	print()
 	print("Saving the model to file")
 	torch.save(model.state_dict(), partial_dict)
 	end_time = time.monotonic()

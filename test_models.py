@@ -50,9 +50,7 @@ current_trial = 1
 print("Testing accuracy of model using", data, "with trial count of: ", trials)
 def test_model(model):
 	# keeping a count to test the accuracy of model
-	total_correct = 0
-	total_from_trials = 0
-	trials_pos, trials_neg = 0, 0
+	total_correct, total_from_trials, trials_pos, trials_neg= 0, 0, 0, 0
 	used_tumor = tumor_data_size 
 	used_normal = normal_data_size
 	for trial in range(trials):	
@@ -89,9 +87,6 @@ def test_model(model):
 					if torch.equal(predicted, target):
 						true_neg += 1
 				
-				sys.stdout.write("\r")
-				sys.stdout.flush()	
-		
 			# getting normal is considered True, tumor is False
 
 			# account for specificity and sensitivity here
@@ -119,17 +114,17 @@ def test_model(model):
 		print("Overall Specificity: ", trials_neg, "/", total_from_trials / 2, "=", trials_neg / (total_from_trials / 2))
 
 print()
-print("Zero-weights model")
-test_model(model_partial)
-print()
+#print("Zero-weights model")
+#test_model(model_partial)
+#print()
 
 print("Dense model")
 test_model(model_dense)
 print()
 
-print("Split model")
-test_model(model_split)
-print()
+#print("Split model")
+#test_model(model_split)
+#print()
 
 end_time = time.monotonic()
 print("Runtime:", timedelta(seconds=end_time - start_time))

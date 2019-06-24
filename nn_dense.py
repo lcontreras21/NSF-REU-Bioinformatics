@@ -1,10 +1,3 @@
-# neural network attempt number 4 
-# creating a basic neural network that's stock from python
-
-# using tutorial found at https://pytorch.org/tutorials/beginner/nlp/deep_learning_tutorial.html#creating-network-components-in-pytorch
-
-# example of logarithmic and nonlinear implementation
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -33,15 +26,14 @@ def add_to_data_uneven(data_set, tumor_max, normal_max, normal_data, tumor_data)
 class NN_dense(nn.Module):
 	def __init__(self, gene_size, hidden_size, num_labels):
 		super(NN_dense, self).__init__()
-		self.fc1 = nn.Linear(gene_size, hidden_size * 3)
-		self.relu = nn.ReLU()
-		self.fc2 = nn.Linear(hidden_size * 3, num_labels)
-		#self.fc1 = nn.Linear(gene_size, num_labels)	
+		#self.fc1 = nn.Linear(gene_size, 5)
+		#self.relu = nn.ReLU()
+		#self.fc2 = nn.Linear(5, num_labels)
+		self.fc1 = nn.Linear(gene_size, num_labels)
 	def forward(self, gene_vec):
+		#out = self.fc2(self.fc1(gene_vec))
 		out = self.fc1(gene_vec)
-		out = self.relu(out)
-		out = self.fc2(out)
-		out = F.log_softmax(out, dim=1)
+		#out = F.log_softmax(out, dim=1)
 		return out
 
 def make_gene_vector(file_line, input_size):
@@ -64,13 +56,6 @@ if __name__ == "__main__":
 	# text files for normal and tumor data
 	normal_data = open(text_file_normal, "r")
 	tumor_data = open(text_file_tumor, "r")
-	print("Loading the data")
-	
-	training_data = []
-	add_to_data_uneven(training_data, tumor_data_size, normal_data_size,  normal_data, tumor_data)
-
-	normal_data.close()
-	tumor_data.close()
 
 	print("Building the dense model trained on the", mode,
 			tumor_data_size, "Tumor and", 
@@ -79,12 +64,22 @@ if __name__ == "__main__":
 			num_epochs, "epochs,", 
 			hidden_size, "neurons in the hidden layer,", 
 			learning_rate, "learning rate.")
-
+	
 	# building the model and loading other functions
 	model = NN_dense(input_size, hidden_size, output_size)
 	model = model.train()
 	loss_function = nn.CrossEntropyLoss()
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+	print("Loading the data", end='', flush=True)	
+	training_data = []
+	add_to_data_uneven(training_data, tumor_data_size, normal_data_size,  normal_data, tumor_data)
+
+	normal_data.close()
+	tumor_data.close()
+	sys.stdout.write("\r")
+	sys.stdout.flush()
+	print("Loaded the data ", flush=True)
 
 	print("Training the model")
 	for epoch in tqdm(range(num_epochs)):
@@ -105,7 +100,8 @@ if __name__ == "__main__":
 			loss = loss_function(output, target)
 			loss.backward()
 			optimizer.step()
-		# progress tracker
+	
+	print()
 	print("Saving the model to file")
 	torch.save(model.state_dict(), dense_dict)
 	print("Time elapsed: ", timedelta(seconds=time.monotonic() - start_time))
