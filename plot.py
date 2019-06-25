@@ -3,7 +3,7 @@ Plotting the neural networks to show gene importance
 '''
 
 import matplotlib as mpl
-mpl.use('agg')
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 import networkx as nx
 import torch 
@@ -20,10 +20,10 @@ def group_vertices():
 	if model == zero
 		return wieghted edge with low probability
 	'''
-	vertices = [] 
+	vertices_input = [] 
 	if model == "dense":
-		for gene in gene_names:
-			vertices += [(gene, i) for i in range(len(gene_groups))]
+		for gene in gene_names[:1000]:
+			vertices_input += [(gene, i) for i in range(len(gene_groups))]
 	
 	elif model == "zero":
 		for gene in gene_names:
@@ -31,21 +31,22 @@ def group_vertices():
 			gene_locations = find_gene(gene, gene_groups)
 			no_connections = [x for x in no_connections if x not in gene_locations]
 
-			vertices += [(gene, i, 0.25) for i in no_connections]
-			vertices += [(gene, i, 1) for i in gene_locations]
+			vertices_input += [(gene, i, 0.25) for i in no_connections]
+			vertices_input += [(gene, i, 1) for i in gene_locations]
 
 	elif model == "split":
 		for gene in gene_names:
 			gene_locations = find_gene(gene, gene_groups)
-			vertices += [(gene, i, 1) for i in gene_locations]
-
-	vertices += [(i, "Tumor", 1) for i in range(len(gene_groups))]
-	vertices += [(i, "Normal", 1) for i in range(len(gene_groups))]
-	return vertices
+			vertices_input += [(gene, i, 1) for i in gene_locations]
+	
+	vertices_output = []
+	vertices_output += [(i, "Tumor") for i in range(len(gene_groups))]
+	vertices_output += [(i, "Normal") for i in range(len(gene_groups))]
+	return vertices_input, vertices_output
 
 def position():
 	pos = {}
-	for i, gene in enumerate(gene_names):
+	for i, gene in enumerate(gene_names[:1000]):
 		pos[gene] = np.array([-10, 35728 - (2 * (i + 1))])
 	for group in range(len(gene_groups)):
 		pos[group] = np.array([0, 35728 - (1429.12 * (group + 1))])
@@ -60,28 +61,44 @@ def network_graph():
 
 	G = nx.Graph()
 	print("Adding nodes", flush=True)	
-	G.add_nodes_from(gene_names)
+	G.add_nodes_from(gene_names[:1000])
 	G.add_nodes_from(range(len(gene_groups)))
 	G.add_nodes_from(["Tumor", "Normal"])
 
-	print("Adding weighted edges", flush=True)
-	G.add_edges_from(group_vertices())
+	print("Adding edges", flush=True)
+	vertices_input, vertices_output = group_vertices()
+	G.add_edges_from(vertices_input + vertices_output)
 	
 	print("Fixing positions on graph", flush=True)
 	pos = position()
 
 	print("Drawing graph and saving to file", flush=True)
-	plt.figure(1, figsize=(10,10))
+	plt.figure(1, figsize=(5,5))
 	plt.title(model)
 	plt.axis([-10, 10, -35728, 35728])
 	plt.xlabel("Input layer    |    Hidden Layer    |    Output Layer")
-	nx.draw_networkx(G, 
-			pos=pos, 
-			node_size=70, 
-			alpha=0.25, 
-			with_labels=False, 
-			width=0.25)
-	plt.savefig("graph.png")
+	print(1,flush=True)	
+	nx.draw_networkx_nodes(G,
+		pos=pos,
+		node_size=70,
+		alpha=0.25)
+	print(2, flush=True)
+	nx.draw_networkx_edges(G,
+		pos=pos,
+		edgelist=vertices_input,
+		alpha=0.1,
+		style="dashed",
+		width=0.05)
+	print(3, flush=True)
+	nx.draw_networkx_edges(G,
+		pos=pos,
+		edgelist=vertices_output,
+		width=0.5)
+	
+	
+	#plt.show()
+	plt.savefig("graph.png", dpi=500)
+	pass
 
 if __name__ == "__main__":
 	start_time = time.monotonic()	
