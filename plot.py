@@ -23,7 +23,7 @@ def group_vertices():
 	vertices = [] 
 	if model == "dense":
 		for gene in gene_names:
-			vertices += [(gene, i, 1) for i in range(len(gene_groups))]
+			vertices += [(gene, i) for i in range(len(gene_groups))]
 	
 	elif model == "zero":
 		for gene in gene_names:
@@ -45,14 +45,12 @@ def group_vertices():
 
 def position():
 	pos = {}
-	location = 0.6
-	change = 0.00003587
 	for i, gene in enumerate(gene_names):
-		pos[gene] = np.array([-1, location - (change * (i+1))])
+		pos[gene] = np.array([-10, 35728 - (2 * (i + 1))])
 	for group in range(len(gene_groups)):
-		pos[group] = np.array([0, location - (0.024 * (group + 1))])
-	pos["Tumor"] = np.array([1, 0.3])
-	pos["Normal"] = np.array([1, -0.3])
+		pos[group] = np.array([0, 35728 - (1429.12 * (group + 1))])
+	pos["Tumor"] = np.array([10, 20000])
+	pos["Normal"] = np.array([10, -20000])
 	return pos
 def network_graph():
 	'''
@@ -67,14 +65,22 @@ def network_graph():
 	G.add_nodes_from(["Tumor", "Normal"])
 
 	print("Adding weighted edges", flush=True)
-	G.add_weighted_edges_from(group_vertices())
+	G.add_edges_from(group_vertices())
 	
 	print("Fixing positions on graph", flush=True)
 	pos = position()
 
 	print("Drawing graph and saving to file", flush=True)
-	plt.figure(1)
-	nx.draw(G, pos)
+	plt.figure(1, figsize=(10,10))
+	plt.title(model)
+	plt.axis([-10, 10, -35728, 35728])
+	plt.xlabel("Input layer    |    Hidden Layer    |    Output Layer")
+	nx.draw_networkx(G, 
+			pos=pos, 
+			node_size=70, 
+			alpha=0.25, 
+			with_labels=False, 
+			width=0.25)
 	plt.savefig("graph.png")
 
 if __name__ == "__main__":
@@ -107,4 +113,5 @@ if __name__ == "__main__":
 	
 	network_graph()
 	print("Time elapsed:", timedelta(seconds=time.monotonic() - start_time), flush=True)
+	print()
 
