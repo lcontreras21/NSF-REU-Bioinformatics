@@ -3,15 +3,16 @@ Plotting the neural networks to show gene importance
 '''
 
 import matplotlib as mpl
-mpl.use('TkAgg')
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import networkx as nx
 import torch 
 import numpy as np
 import time
 from datetime import timedelta 
+from collections import OrderedDict
 
-def group_vertices():
+def group_vertices(model):
 	'''
 	if model == dense
 		return everything connected
@@ -22,16 +23,15 @@ def group_vertices():
 	'''
 	vertices_input = [] 
 	if model == "dense":
-		for gene in gene_names[:1000]:
-			vertices_input += [(gene, i) for i in range(len(gene_groups))]
+		for gene in gene_names:
+			vertices_input += [(gene, i, 1) for i in range(len(gene_groups))]
 	
 	elif model == "zero":
 		for gene in gene_names:
 			no_connections = list(range(50))
 			gene_locations = find_gene(gene, gene_groups)
 			no_connections = [x for x in no_connections if x not in gene_locations]
-
-			vertices_input += [(gene, i, 0.25) for i in no_connections]
+			#vertices_input += [(gene, i, 0.25) for i in no_connections]
 			vertices_input += [(gene, i, 1) for i in gene_locations]
 
 	elif model == "split":
@@ -39,70 +39,107 @@ def group_vertices():
 			gene_locations = find_gene(gene, gene_groups)
 			vertices_input += [(gene, i, 1) for i in gene_locations]
 	
+	
 	vertices_output = []
-	vertices_output += [(i, "Tumor") for i in range(len(gene_groups))]
-	vertices_output += [(i, "Normal") for i in range(len(gene_groups))]
+	vertices_output += [(i, "Tumor", 1) for i in range(len(gene_groups))]
+	vertices_output += [(i, "Normal", 1) for i in range(len(gene_groups))]
 	return vertices_input, vertices_output
+
 
 def position():
 	pos = {}
-	for i, gene in enumerate(gene_names[:1000]):
-		pos[gene] = np.array([-10, 35728 - (2 * (i + 1))])
+	for i, gene in enumerate(gene_names):
+		pos[gene] = np.array([-9.5, len(gene_names) - (2 * (i + 1))])
 	for group in range(len(gene_groups)):
-		pos[group] = np.array([0, 35728 - (1429.12 * (group + 1))])
-	pos["Tumor"] = np.array([10, 20000])
-	pos["Normal"] = np.array([10, -20000])
+		scaling_ratio = len(gene_names) / len(gene_groups)
+		pos[group] = np.array([0, len(gene_names) - (2 * scaling_ratio * (group + 1))])
+	pos["Tumor"] = np.array([9, int(len(gene_names) * (2/3))])
+	pos["Normal"] = np.array([9, -int(len(gene_names) * (2/3))])
 	return pos
-def network_graph():
-	'''
-	Return the network graph based on the state_dict stored 
-	in memory.
-	'''
 
+def network_graph(model):
+	time_model = time.monotonic()
+	
+	print("\nCurrently working on:", model)
 	G = nx.Graph()
-	print("Adding nodes", flush=True)	
-	G.add_nodes_from(gene_names[:1000])
+	print("Collecting nodes", flush=True)	
+	G.add_nodes_from(gene_names)
 	G.add_nodes_from(range(len(gene_groups)))
 	G.add_nodes_from(["Tumor", "Normal"])
 
-	print("Adding edges", flush=True)
-	vertices_input, vertices_output = group_vertices()
-	G.add_edges_from(vertices_input + vertices_output)
+	print("Collecting vertices", flush=True)
+	vertices_input, vertices_output = group_vertices(model)
+	G.add_weighted_edges_from(vertices_input + vertices_output)
 	
-	print("Fixing positions on graph", flush=True)
+	print("Fixing node and edge poisitons on graph", flush=True)
 	pos = position()
 
-	print("Drawing graph and saving to file", flush=True)
-	plt.figure(1, figsize=(5,5))
+	plt.figure(model, figsize=(10, 10))
 	plt.title(model)
-	plt.axis([-10, 10, -35728, 35728])
-	plt.xlabel("Input layer    |    Hidden Layer    |    Output Layer")
-	print(1,flush=True)	
+	plt.axis([-10, 10, -len(gene_names), len(gene_names)])
+	plt.xlabel("Input layer        |    Hidden Layer    |        Output Layer")
+	
+	print("Drawing nodes", flush=True)
+	if model == "split" or model == "zero":
+		used_genes = [item[0] for item in vertices_input]
+	else:
+		used_genes = gene_names
 	nx.draw_networkx_nodes(G,
+		nodelist=used_genes,
 		pos=pos,
-		node_size=70,
+		node_size=0.1,
+		node_shape='>',
 		alpha=0.25)
-	print(2, flush=True)
+	nx.draw_networkx_nodes(G,
+		nodelist=list(range(len(gene_groups))),
+		pos=pos,
+		node_size=25,
+		node_shape='h',
+		alpha=1)
+	nx.draw_networkx_nodes(G,
+		nodelist=["Tumor", "Normal"],
+		pos=pos,
+		node_size=300,
+		node_shape='8',
+		alpha=1)
+	
+	print("Drawing vertices in the input->hidden layer", flush=True)
+	esmall = [(u, v) for (u, v, d) in vertices_input if d == 0.25]
+	elarge = [(u, v) for (u, v, d) in vertices_input if d == 1]
+	
+	'''
 	nx.draw_networkx_edges(G,
 		pos=pos,
-		edgelist=vertices_input,
-		alpha=0.1,
-		style="dashed",
-		width=0.05)
-	print(3, flush=True)
+		edgelist=esmall,
+		alpha=0.01,
+		style="dotted",
+		width=0.001)
+	'''
+	nx.draw_networkx_edges(G,
+		pos=pos,
+		edgelist=elarge,
+		alpha=0.25,
+		style="solid",
+		width=0.01)
+	print("Drawing vertices in the hidden->output layer", flush=True)
 	nx.draw_networkx_edges(G,
 		pos=pos,
 		edgelist=vertices_output,
 		width=0.5)
-	
-	
-	#plt.show()
-	plt.savefig("graph.png", dpi=500)
-	pass
+	'''
+	nx.draw_networkx_labels(G,
+		pos=pos,
+		font_size=0.1,
+		alpha=0.25)
+	'''
+	print("Saving to file","diagrams/" + model + ".pdf", flush=True)
+	plt.savefig("diagrams/" + model + ".pdf")
+	plt.close(model)
+	print("Done", flush=True)
+	print("Time to draw model:", timedelta(seconds=time.monotonic() - time_model), flush=True)
 
 if __name__ == "__main__":
 	start_time = time.monotonic()	
-	model = "dense" # dense, split, zero
 
 	#f = open(state_dict_mem, "rb")
 	#state_dict = torch.load(f)
@@ -112,7 +149,7 @@ if __name__ == "__main__":
 	gene_group_file = "text_files/h.all.v6.2.symbols.txt"
 
 	g = open(gene_names_file, "r")
-	gene_names = g.readline().split()
+	gene_names = list(OrderedDict.fromkeys(g.readline().split()[1:-1]))
 	g.close()
 
 	h = open(gene_group_file, "r")
@@ -128,7 +165,11 @@ if __name__ == "__main__":
 				index.append(i)
 		return index
 	
-	network_graph()
-	print("Time elapsed:", timedelta(seconds=time.monotonic() - start_time), flush=True)
+	network_graph("split")
 	print()
-
+	network_graph("zero")
+	print()
+	network_graph("dense")
+	print()
+	print("Time Total:", timedelta(seconds=time.monotonic() - start_time), flush=True)
+	print()

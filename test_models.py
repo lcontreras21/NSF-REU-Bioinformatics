@@ -25,7 +25,7 @@ if mode != "free":
 	elif data == "subset":
 		text_file_normal = train_dir + "subset_train_normal_samples.txt"
 		text_file_tumor = train_dir + "subset_train_tumor_samples.txt"
-		text_data = subset_logged
+		text_data = sub_logged
 		input_size = 4579
 	
 	tumor_data_size = 1994
@@ -114,17 +114,17 @@ def test_model(model):
 		print("Overall Specificity: ", trials_neg, "/", total_from_trials / 2, "=", trials_neg / (total_from_trials / 2))
 
 print()
-#print("Zero-weights model")
-#test_model(model_partial)
-#print()
+print("Zero-weights model")
+test_model(model_partial)
+print()
 
 print("Dense model")
 test_model(model_dense)
 print()
 
-#print("Split model")
-#test_model(model_split)
-#print()
+print("Split model")
+test_model(model_split)
+print()
 
 end_time = time.monotonic()
 print("Runtime:", timedelta(seconds=end_time - start_time))

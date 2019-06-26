@@ -3,7 +3,7 @@
 
 # data is either full, or subset
 # mode is either train, test, or free
-data = "full"
+data = "subset"
 mode = "train"
 
 # testing parameters
@@ -23,7 +23,7 @@ hidden_size = 50
 input_size = 35728
 output_size = 2
 num_epochs = 1 
-learning_rate = 0.01
+learning_rate = 0.001
 
 # text files to use for the data
 train_dir = "text_files/training_data/"

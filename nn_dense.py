@@ -26,13 +26,13 @@ def add_to_data_uneven(data_set, tumor_max, normal_max, normal_data, tumor_data)
 class NN_dense(nn.Module):
 	def __init__(self, gene_size, hidden_size, num_labels):
 		super(NN_dense, self).__init__()
-		#self.fc1 = nn.Linear(gene_size, 5)
-		#self.relu = nn.ReLU()
-		#self.fc2 = nn.Linear(5, num_labels)
-		self.fc1 = nn.Linear(gene_size, num_labels)
+		self.fc1 = nn.Linear(gene_size, 10)
+		self.relu = nn.ReLU()
+		self.fc2 = nn.Linear(10, num_labels)
+		#self.fc1 = nn.Linear(gene_size, num_labels)
 	def forward(self, gene_vec):
-		#out = self.fc2(self.fc1(gene_vec))
-		out = self.fc1(gene_vec)
+		out = self.fc2(self.fc1(gene_vec))
+		#out = self.fc1(gene_vec)
 		#out = F.log_softmax(out, dim=1)
 		return out
 
