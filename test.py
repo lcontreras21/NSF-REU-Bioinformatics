@@ -277,6 +277,7 @@ print(missing_genes)
 #k.close()
 '''
 
+'''
 gene_file = open("text_files/gene_pairs.pickle", "rb")
 x = pickle.load(gene_file)
 gene_file.close()
@@ -312,4 +313,59 @@ print(count)
 #x = open("text_files/actual_missing_genes.txt", "w")
 #x.write("\t".join(missing_genes))
 #x.close()
+'''
 
+### looking at weights and importance. 
+# no idea what I'm doing here 
+
+f = torch.load("state_dicts/nn_dense.pt")
+g = torch.load("state_dicts/nn_split.pt")
+h = torch.load("state_dicts/nn_partial.pt")
+
+# they are ordered dicts with weights and biases
+# only want weights
+
+dense = f["fc1.weight"]
+partial = h["fc1.weight"]
+split = []
+
+for i in g:
+	if "weight" in i:
+		split.append(g[i])
+
+# dense and partial are both tensors of size 50x4579
+# split is a list of 50 tensors with various size 1xN
+
+# now time to get weight sums for each node
+
+# tensors of size 1x50
+dense_ws = dense.sum(1)
+partial_ws = partial.sum(1)
+
+split_ws = torch.zeros(50)
+for i, layer in enumerate(split[:-1]):
+	total = layer.sum().item()
+	split_ws[i] = total
+
+from copy import deepcopy
+def five_lines(ws, function):
+	max_indices = []
+	list_ws = ws.tolist()
+	list_ws_dummy = deepcopy(list_ws)
+	for i in range(5):
+		max_val = function(list_ws_dummy)
+		list_ws_dummy.remove(max_val)
+		max_indices.append(list_ws.index(max_val))
+	max_indices.sort()
+	print(max_indices)
+
+print(dense_ws,"\n", partial_ws,"\n", split_ws)
+five_lines(dense_ws, max)
+five_lines(partial_ws, max)
+five_lines(split_ws, max)
+
+#none of them are the same
+
+five_lines(dense_ws, min)
+five_lines(partial_ws, min)
+five_lines(split_ws, min)

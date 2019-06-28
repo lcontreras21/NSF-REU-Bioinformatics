@@ -17,12 +17,12 @@ elif mode == "train":
 
 samples_per_trial = 50
 trials = 1 
-hidden_size = 50
+hidden_size = 50 
 
 # hyperparameters
 input_size = 35728
 output_size = 2
-num_epochs = 1 
+num_epochs = 3 
 learning_rate = 0.001
 
 # text files to use for the data
@@ -55,7 +55,7 @@ elif data == "full" and mode == "train":
 # gene group data to use
 text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 #text_gene_groups = "text_files/c2.cp.kegg.v6.2.symbols.txt"
-
+#hidden_size = 186 
 
 
 # models to test
@@ -66,8 +66,5 @@ from nn_split import NN_split
 split_dict = "state_dicts/nn_split.pt"
 dense_dict = "state_dicts/nn_dense.pt"
 partial_dict = "state_dicts/nn_partial.pt"
-
-
-
 
 

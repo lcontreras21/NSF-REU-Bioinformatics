@@ -29,15 +29,9 @@ from settings import *
 
 # adds data to a list for training or testing. Could add an 
 # even amount or uneven amount based on inputs.
-def add_to_data(data_set, tumor_max, normal_max, used_tumor, used_normal):
+def add_to_data(data_set, tumor_max, normal_max):
 	normal_data = open(text_file_normal, "r")
 	tumor_data = open(text_file_tumor, "r")
-	if used_tumor > 0:
-		for i in range(used_tumor):
-			tumor_data.readline()
-	if used_normal > 0:
-		for i in range(used_normal):
-			normal_data.readline()
 	tumors = 0
 	normals = 0
 	while tumors < tumor_max:
@@ -128,7 +122,7 @@ class NN_split(nn.Module):
 			# of gene group size and outputs a 
 			# tensor of size 1
 			fc.append(nn.Linear(len(group_indices), 1))
-
+		print("asdas")
 		self.linears = nn.ModuleList(fc)
 		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(hidden_size, 2)
@@ -151,7 +145,8 @@ class NN_split(nn.Module):
 		out = F.log_softmax(out, dim=1)
 		return out
 
-
+	def __str__(self):
+		return "Split"
 
 if __name__ == "__main__":
 	start_time = time.monotonic()
@@ -175,7 +170,7 @@ if __name__ == "__main__":
 
 	print("Loading the data", end='', flush=True)
 	training_data = []
-	add_to_data(training_data, tumor_data_size, normal_data_size, 0, 0)
+	add_to_data(training_data, tumor_data_size, normal_data_size)
 	sys.stdout.write("\r")
 	sys.stdout.flush()
 	print("Loaded the data ", flush=True)

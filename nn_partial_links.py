@@ -22,15 +22,9 @@ from settings import *
 
 # adds data to a list for training or testing. Could add an 
 # even amount or uneven amount based on inputs.
-def add_to_data(data_set, tumor_max, normal_max, used_tumor, used_normal):
+def add_to_data(data_set, tumor_max, normal_max):
 	normal_data = open(text_file_normal, "r")
 	tumor_data = open(text_file_tumor, "r")
-	if used_tumor > 0:
-		for i in range(used_tumor):
-			tumor_data.readline()
-	if used_normal > 0:
-		for i in range(used_normal):
-			normal_data.readline()
 	tumors = 0
 	normals = 0
 	while tumors < tumor_max:
@@ -98,26 +92,10 @@ def get_gene_indicies(gene_group, gene_indexer):
 # using gene groups data, set the weights 
 # in the first layer to zero
 # for the genes that are not in the group.
-def set_weights(model_state, gene_groups, gene_group_indicies): 
+def set_weights(model_state, mask): 
 	# we are interested in the first layer in model_state
 	layer = model_state[list(model_state)[0]]
-	# this returns a tensor of dimension (size of gene_group, size of input)
-	
-	# go through each group, for hallmark there are 50 groups
-	for group_index, gene_group in enumerate(gene_groups):
-		# then go through each gene in that group
-		# genes not in that group should have weight of 0
-	
-		# get current row and use it as a list
-		layer_list = layer[group_index]
-	
-		# list containing which indices to keep
-		mask = np.array([0] * len(layer_list))
-		mask[gene_group_indicies[group_index]] = 1
-		mask = torch.FloatTensor(mask)
-		layer_list = layer_list * mask
-		layer[group_index] = layer_list
-		
+	layer = layer * mask	
 
 # NN class 
 class NN(nn.Module):
@@ -132,7 +110,8 @@ class NN(nn.Module):
 		out = self.fc2(out)
 		out = F.log_softmax(out, dim=1)
 		return out
-		
+	def __str__(self):
+		return "Zero-weights"
 
 
 if __name__ == "__main__":
@@ -158,21 +137,22 @@ if __name__ == "__main__":
 	
 	print("Loading the data", end='', flush=True)
 	training_data = []
-	add_to_data(training_data, tumor_data_size, normal_data_size, 0, 0)
+	add_to_data(training_data, tumor_data_size, normal_data_size)
 	sys.stdout.write("\r")
 	sys.stdout.flush()
 	print("Loaded the data ", flush=True)
-
+	
 	print("Doing some calculations")
 	gene_indexer = gene_dict()
-	gene_group_indicies = [] 
-	for gene_group in gene_groups:
+	mask = np.array([[0] * len(training_data[0][0])] * len(gene_groups))
+	for group_index, gene_group in enumerate(gene_groups):
 		group_indices = get_gene_indicies(gene_group, gene_indexer)
-		gene_group_indicies.append(group_indices)
-	
+		mask[group_index][group_indices] = 1
+	mask = torch.FloatTensor(mask)
+
 	# set the starting weights to model the biology
 	print("Setting the weights of the model")
-	set_weights(model.state_dict(), gene_groups, gene_group_indicies)
+	set_weights(model.state_dict(), mask)
 
 	# train the model
 	print("Training the model")
@@ -193,7 +173,7 @@ if __name__ == "__main__":
 			# apply learning to the model based on the instance
 			loss = loss_function(output, target)
 			loss.backward()
-			set_weights(model.state_dict(), gene_groups, gene_group_indicies)
+			set_weights(model.state_dict(), mask)
 			optimizer.step()
 	
 	print()
@@ -202,3 +182,4 @@ if __name__ == "__main__":
 	end_time = time.monotonic()
 	print("Runtime:", timedelta(seconds=end_time - start_time))
 	print()
+	pass
