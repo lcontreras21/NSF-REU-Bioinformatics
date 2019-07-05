@@ -30,8 +30,7 @@ if mode != "free":
 	
 	tumor_data_size = 1994
 	normal_data_size = 146
-print(text_file_normal)
-print(text_file_tumor)
+
 input_size, output_size, hidden_size = input_size, 2, hidden_size
 model_partial = NN(input_size, hidden_size, output_size)
 model_partial.load_state_dict(torch.load(partial_dict))
@@ -55,19 +54,19 @@ if mode[0] != "t":
 	add_to_data(testing_data, samples_per_trial, samples_per_trial)
 else:
 	add_to_data(testing_data, tumor_data_size, normal_data_size)
-print(text_file_normal)
 used_tumor += samples_per_trial
 used_normal += samples_per_trial
 random.shuffle(testing_data)
 
 def test_model(model):
-	print("Testing accuracy of", model, "using", data, "dataset")
+	if debug:
+		print("Testing accuracy of", model, "using", data, "dataset")
 	# keeping a count to test the accuracy of model
 	with torch.no_grad():
 		correct, total, =  0, 0
 		true_pos, true_neg = 0, 0
 		total_pos, total_neg = 0, 0
-		for i in tqdm(range(len(testing_data))):
+		for i in tqdm(range(len(testing_data)), disable=not debug):
 			instance, label = testing_data[i]
 			
 			gene_vec = make_gene_vector(instance)
@@ -96,25 +95,35 @@ def test_model(model):
 		#print("Sensitivity:", true_pos, "/", total_pos, "=", true_pos/total_pos)
 		#print("Specificity:", true_neg, "/", total_neg, "=", true_neg/total_neg)
 		
-		print(true_pos/total_pos)
-		print(true_neg/total_neg)
+		if debug:
+			print(true_pos/total_pos)
+			print(true_neg/total_neg)
 		
 	percent_correct = correct / total
 	#print("Total Correct: ", total_correct, "/", Total, "=", percent_correct)
-	print(percent_correct)
+	if debug:
+		print(percent_correct)
 
-print()
-print("Zero-weights model")
+	f = open("text_files/analysis/percentages.txt", "a")
+	f.write(model.__str__() + "\t" + str(true_pos/total_pos) + "\t" + str(true_neg/total_neg) + "\t" + str(percent_correct) + "\n")
+	f.close()
+
+if debug:
+	print()
+	print("Zero-weights model")
 test_model(model_partial)
-print()
+if debug:
+	print()
 
-print("Dense model")
+	print("Dense model")
 test_model(model_dense)
-print()
+if debug:
+	print()
 
-print("Split model")
+	print("Split model")
 test_model(model_split)
-print()
+if debug:
+	print()
 
-end_time = time.monotonic()
-print("Runtime:", timedelta(seconds=end_time - start_time))
+	end_time = time.monotonic()
+	print("Runtime:", timedelta(seconds=end_time - start_time))

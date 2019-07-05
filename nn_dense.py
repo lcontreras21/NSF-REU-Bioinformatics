@@ -31,7 +31,7 @@ class NN_dense(nn.Module):
 		self.fc2 = nn.Linear(hidden_size, num_labels)
 		#self.fc1 = nn.Linear(gene_size, num_labels)
 	def forward(self, gene_vec):
-		out = self.fc2(self.fc1(gene_vec))
+		out = self.fc2(self.relu(self.fc1(gene_vec)))
 		#out = self.fc1(gene_vec)
 		out = F.log_softmax(out, dim=1)
 		return out
@@ -58,11 +58,12 @@ if __name__ == "__main__":
 	# text files for normal and tumor data
 	normal_data = open(text_file_normal, "r")
 	tumor_data = open(text_file_tumor, "r")
-
-	print("Building the dense model trained on the", mode,
+	
+	if debug:
+		print("Building the dense model trained on the", mode,
 			tumor_data_size, "Tumor and", 
 			normal_data_size, "Normal samples.")
-	print("Hyperparameters:", 
+		print("Hyperparameters:", 
 			num_epochs, "epochs,", 
 			hidden_size, "neurons in the hidden layer,", 
 			learning_rate, "learning rate.")
@@ -73,7 +74,8 @@ if __name__ == "__main__":
 	loss_function = nn.CrossEntropyLoss()
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-	print("Loading the data", end='', flush=True)	
+	if debug:
+		print("Loading the data", end='', flush=True)	
 	training_data = []
 	add_to_data_uneven(training_data, tumor_data_size, normal_data_size,  normal_data, tumor_data)
 
@@ -81,12 +83,12 @@ if __name__ == "__main__":
 	tumor_data.close()
 	sys.stdout.write("\r")
 	sys.stdout.flush()
-	print("Loaded the data ", flush=True)
-
-	print("Training the model")
-	for epoch in tqdm(range(num_epochs)):
+	if debug:
+		print("Loaded the data ", flush=True)
+		print("Training the model")
+	for epoch in tqdm(range(num_epochs), disable=not debug):
 		random.shuffle(training_data)
-		for i in tqdm(range(len(training_data))):
+		for i in tqdm(range(len(training_data)), disable=not debug):
 			instance, label = training_data[i]
 			
 			# erasing gradients from previous run
@@ -102,9 +104,10 @@ if __name__ == "__main__":
 			loss = loss_function(output, target)
 			loss.backward()
 			optimizer.step()
-	
-	print()
-	print("Saving the model to file")
+	if debug:
+		print()
+		print("Saving the model to file")
 	torch.save(model.state_dict(), dense_dict)
-	print("Time elapsed: ", timedelta(seconds=time.monotonic() - start_time))
-	print()
+	if debug:
+		print("Time elapsed: ", timedelta(seconds=time.monotonic() - start_time))
+		print()

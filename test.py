@@ -87,41 +87,37 @@ for gene_group in gene_groups:
 	for gene in gene_group:
 		if gene not in genes:
 			genes.append(gene)
+print(len(genes), flush=True)
 
 # importing dict of indices for gene in rnaseq dataset			
 genes_dict = gene_dict()
 
 #getting indices from unique genes, it is sorted
 gene_indices = get_gene_indicies(genes, genes_dict)
+print(len(gene_indices), flush=True)
 gene_indices = [0] + gene_indices + [len(gene_groups[0]) - 1]
+
 f = open("text_files/logged_scaled_rnaseq.txt", "r")
 # open new file for subset of data
+
 g = open("text_files/subset_logged_scaled_rnaseq.txt", "w")
 index = 0
 for line in f:
-	if index % 100 == 0:
-		print(index)
-	index += 1
 	data = line.split()
-	# remove entries from list that aren't necessary
-	new_data = []
-	prev = 0
-	for item in gene_indices:
-		data[prev: item] = [0] * (item - prev)
-		prev = item + 1
-	new_data = list(filter((0).__ne__, data)) 
-	to_write = "\t".join(new_data)
+	data_used = data[1:-1]
+	subset_data = [data_used[index] for index in gene_indices]
+	to_write = "\t".join([data[0]] + subset_data + [data[-1]])
 	g.write(to_write+"\n")
 	
-print(len(new_data))
+print(len(subset_data))
 f.close()
 g.close()
-'''
 
+
+'''
 
 '''
 # create files for tumor data and normal data based on subset
-#### TODO preserver tumor/normal information in the above chunk of code
 f = open("text_files/subset_logged_scaled_rnaseq.txt", "r")
 g = open("text_files/subset_normal_samples.txt", "w")
 h = open("text_files/subset_tumor_samples.txt", "w")
@@ -143,17 +139,19 @@ g.close()
 h.close()
 '''
 
+
 '''
 # keeping track of gene names in the subset data
-f = open("text_files/subset_logged_scaled_rnaseq.txt", "r")
-g = open("text_files/subset_gene_names.txt", "w")
+y = open("text_files/subset_logged_scaled_rnaseq.txt", "r")
+u = open("text_files/subset_gene_names.txt", "w")
 
-data = f.readline()
-g.write(data)
+data = y.readline()
+u.write(data)
 
-f.close()
-g.close()
+y.close()
+u.close()
 '''
+
 '''
 # making training data for full and subset to be used for 80 - 20
 f = open("text_files/full_normal_samples.txt", "r")
@@ -315,6 +313,8 @@ print(count)
 #x.close()
 '''
 
+
+'''
 ### looking at weights and importance. 
 # no idea what I'm doing here 
 
@@ -346,26 +346,48 @@ split_ws = torch.zeros(50)
 for i, layer in enumerate(split[:-1]):
 	total = layer.sum().item()
 	split_ws[i] = total
-
+from itertools import combinations
 from copy import deepcopy
-def five_lines(ws, function):
-	max_indices = []
-	list_ws = ws.tolist()
-	list_ws_dummy = deepcopy(list_ws)
-	for i in range(5):
-		max_val = function(list_ws_dummy)
-		list_ws_dummy.remove(max_val)
-		max_indices.append(list_ws.index(max_val))
-	max_indices.sort()
-	print(max_indices)
+def five_lines(data, names, function):
+	special_nums = []
+	for a in range(len(data)):
+		ws = data[a]
+		max_indices = []
+		list_ws = ws.tolist()
+		list_ws_dummy = deepcopy(list_ws)
+		for i in range(5):
+			max_val = function(list_ws_dummy)
+			list_ws_dummy.remove(max_val)
+			max_indices.append(list_ws.index(max_val))
+		max_indices.sort()
+		print("{:<8}".format(names[a]), max_indices)
+		special_nums.append((max_indices, names[a]))
+	
+	combos = list(combinations(special_nums, 2))
+	for pair in combos:
+		print("{:<15}".format(pair[0][1] + "-" + pair[1][1]), "like numbers", list(set(pair[0][0]).intersection(pair[1][0])))
 
-print(dense_ws,"\n", partial_ws,"\n", split_ws)
-five_lines(dense_ws, max)
-five_lines(partial_ws, max)
-five_lines(split_ws, max)
+print("\nWeight")
+five_lines([dense_ws, partial_ws, split_ws], ["dense", "partial", "split"], max)
 
-#none of them are the same
+split_b = []
+for i in g:
+	if "bias" in i:
+		split_b.append(g[i])
+split_bias = torch.zeros(50)
+for i, layer in enumerate(split_b[:-1]):
+	split_bias[i] = layer.item()
 
-five_lines(dense_ws, min)
-five_lines(partial_ws, min)
-five_lines(split_ws, min)
+dense_bias = f["fc1.bias"]
+partial_bias = h["fc1.bias"]
+
+print("\nBiases")
+five_lines([dense_bias, partial_bias, split_bias], ["dense", "partial", "split"], max)
+'''
+import time
+print("apple")
+print("test")
+time.sleep(1)
+
+print("\033[F rekt")
+

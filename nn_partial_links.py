@@ -89,14 +89,22 @@ def get_gene_indicies(gene_group, gene_indexer):
 	indices.sort()
 	return indices
 
+def make_mask():
+	gene_indexer = gene_dict()
+	mask = np.array([[0] * len(training_data[0][0])] * len(gene_groups))
+	for group_index, gene_group in enumerate(gene_groups):
+		group_indices = get_gene_indicies(gene_group, gene_indexer)
+		mask[group_index][group_indices] = 1
+	mask = torch.FloatTensor(mask)
+	return mask
+
 # using gene groups data, set the weights 
 # in the first layer to zero
 # for the genes that are not in the group.
-def set_weights(model_state, mask): 
+def set_weights(model, mask): 
 	# we are interested in the first layer in model_state
-	layer = model_state[list(model_state)[0]]
-	layer = layer * mask	
-
+	model.fc1.weight.data *= mask
+	
 # NN class 
 class NN(nn.Module):
 	def __init__(self, input_size, hidden_size, output_size):
@@ -122,10 +130,11 @@ if __name__ == "__main__":
 	hidden_size = len(gene_groups) 
 	
 	# terminal message to track work
-	print("Building the zero-weights model trained on the", mode, 
+	if debug:
+		print("Building the zero-weights model trained on the", mode, 
 			tumor_data_size, "Tumor and", 
 			normal_data_size, "Normal samples.")
-	print("Hyperparameters:", 
+		print("Hyperparameters:", 
 			num_epochs, "epochs,", 
 			hidden_size, "neurons in the hidden layer,", 
 			learning_rate, "learning rate.")
@@ -135,31 +144,29 @@ if __name__ == "__main__":
 	loss_function = nn.CrossEntropyLoss()
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 	
-	print("Loading the data", end='', flush=True)
+	if debug:
+		print("Loading the data", end='', flush=True)
 	training_data = []
 	add_to_data(training_data, tumor_data_size, normal_data_size)
 	sys.stdout.write("\r")
 	sys.stdout.flush()
-	print("Loaded the data ", flush=True)
-	
-	print("Doing some calculations")
-	gene_indexer = gene_dict()
-	mask = np.array([[0] * len(training_data[0][0])] * len(gene_groups))
-	for group_index, gene_group in enumerate(gene_groups):
-		group_indices = get_gene_indicies(gene_group, gene_indexer)
-		mask[group_index][group_indices] = 1
-	mask = torch.FloatTensor(mask)
+	if debug:
+		print("Loaded the data ", flush=True)
+
+	if debug:
+		print("Doing some calculations")
+	mask = make_mask()
 
 	# set the starting weights to model the biology
-	print("Setting the weights of the model")
-	set_weights(model.state_dict(), mask)
-
+	if debug:
+		print("Setting the weights of the model")
+	set_weights(model, mask)
 	# train the model
-	print("Training the model")
-	for epoch in tqdm(range(num_epochs)):
-		
+	if debug:
+		print("Training the model")
+	for epoch in tqdm(range(num_epochs), disable=not debug):
 		random.shuffle(training_data)
-		for i in tqdm(range(len(training_data))):
+		for i in tqdm(range(len(training_data)), disable=not debug):
 			# erase gradients from previous run
 			instance, label = training_data[i]
 			model.zero_grad()
@@ -173,13 +180,14 @@ if __name__ == "__main__":
 			# apply learning to the model based on the instance
 			loss = loss_function(output, target)
 			loss.backward()
-			set_weights(model.state_dict(), mask)
+			set_weights(model, mask)
 			optimizer.step()
 	
-	print()
-	print("Saving the model to file")
+	if debug:
+		print()
+		print("Saving the model to file")
 	torch.save(model.state_dict(), partial_dict)
 	end_time = time.monotonic()
-	print("Runtime:", timedelta(seconds=end_time - start_time))
-	print()
-	pass
+	if debug:
+		print("Runtime:", timedelta(seconds=end_time - start_time))
+		print()

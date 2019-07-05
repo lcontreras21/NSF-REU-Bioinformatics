@@ -1,4 +1,5 @@
 '''
+i
  neural network where the structure of the network is 
  explicitely defined and the weights are not made zero
 
@@ -99,12 +100,12 @@ def get_gene_indicies(gene_group, gene_indexer):
 	indices.sort()
 	return indices
 
+from operator import itemgetter
+
 def split_data(input_vector, gene_group_indicies):
-	input_vector = input_vector.tolist()[0]
-	split = [] # should be of length of gene_groups
-	for group_indexes in gene_group_indicies:
-		subset = list(map(input_vector.__getitem__, group_indexes))
-		split.append(subset)
+	data = input_vector.tolist()[0]
+	#split = [list(map(data.__getitem__, group_indices)) for group_indices in gene_group_indicies]
+	split = [list(itemgetter(*group_indices)(data)) for group_indices in gene_group_indicies]
 	return split
 
 # NN class 
@@ -122,20 +123,17 @@ class NN_split(nn.Module):
 			# of gene group size and outputs a 
 			# tensor of size 1
 			fc.append(nn.Linear(len(group_indices), 1))
-		print("asdas")
 		self.linears = nn.ModuleList(fc)
 		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(hidden_size, 2)
-	
+
+
 	def forward(self, input_vector):
 		hidden = [] # list of tensors
 		# here we must split the input_vector and active it
 		# using the specific linear function it belongs to
-		input_split = split_data(input_vector, self.gene_group_indicies)
-		for index, layer in enumerate(self.linears):
-			x = torch.FloatTensor(input_split[index])
-			hidden.append(layer(x))
-		
+		processed_data = split_data(input_vector, self.gene_group_indicies)
+		hidden = [self.linears[index](torch.FloatTensor(processed_data[index])) for index in range(len(self.gene_group_indicies))]
 		# concatenate all the linear layers to make a 
 		# tensor with size of gene groups
 		hidden = torch.stack(hidden, 1)
@@ -155,10 +153,11 @@ if __name__ == "__main__":
 	hidden_size = len(import_gene_groups()) 
 	
 	# terminal message to track work
-	print("Building the split model trained on the", mode, 
+	if debug:
+		print("Building the split model trained on the", mode, 
 			tumor_data_size, "Tumor and", 
 			normal_data_size, "Normal samples.", flush=True)
-	print("Hyperparameters:", 
+		print("Hyperparameters:", 
 			num_epochs, "epochs,", 
 			hidden_size, "neurons in the hidden layer,", 
 			learning_rate, "learning rate.", flush=True)
@@ -167,19 +166,22 @@ if __name__ == "__main__":
 	model = model.train()
 	loss_function = nn.CrossEntropyLoss()
 	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-	print("Loading the data", end='', flush=True)
+	
+	if debug:
+		print("Loading the data", end='', flush=True)
 	training_data = []
 	add_to_data(training_data, tumor_data_size, normal_data_size)
 	sys.stdout.write("\r")
 	sys.stdout.flush()
-	print("Loaded the data ", flush=True)
+	if debug:
+		print("Loaded the data ", flush=True)
 	
 	# train the model
-	print("Training the model")
-	for epoch in tqdm(range(num_epochs)):
+	if debug:
+		print("Training the model")
+	for epoch in tqdm(range(num_epochs), disable=not debug):
 		random.shuffle(training_data)
-		for i in tqdm(range(len(training_data))):
+		for i in tqdm(range(len(training_data)), disable=not debug):
 			instance, label = training_data[i]
 			
 			# erase gradients from previous run
@@ -195,10 +197,12 @@ if __name__ == "__main__":
 			loss = loss_function(output, target)
 			loss.backward()
 			optimizer.step()
-	
-	print()
-	print("Saving the model to file")
+
+	if debug:
+		print()
+		print("Saving the model to file")
 	torch.save(model.state_dict(), split_dict)
 	end_time = time.monotonic()
-	print("Runtime:", timedelta(seconds=end_time - start_time))
-	print()
+	if debug:
+		print("Runtime:", timedelta(seconds=end_time - start_time))
+		print()
