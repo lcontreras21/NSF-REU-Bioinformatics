@@ -384,10 +384,39 @@ partial_bias = h["fc1.bias"]
 print("\nBiases")
 five_lines([dense_bias, partial_bias, split_bias], ["dense", "partial", "split"], max)
 '''
-import time
-print("apple")
-print("test")
-time.sleep(1)
 
-print("\033[F rekt")
+
+### Calculate percentage from trials
+
+f = open("text_files/analysis/percentages.txt", "r")
+# info with list of [sensitivity, specificity, correctness]
+zerow = [0, 0, 0]
+dense = [0, 0, 0]
+split = [0, 0, 0]
+total = 0
+for line in f:
+	total += 1
+	data = line.split()
+	name = data[0]
+	data = list(map(float, data[1:]))
+	if name == "Zero-weights":
+		zerow[0] += data[0]
+		zerow[1] += data[1]
+		zerow[2] += data[2]
+	elif name == "Dense":
+		dense[0] += data[0]
+		dense[1] += data[1]
+		dense[2] += data[2]
+	elif name == "Split":
+		split[0] += data[0]
+		split[1] += data[1]
+		split[2] += data[2]
+total = total / 3
+zerow = [zerow[i] / total for i in range(len(zerow))]
+dense = [dense[i] / total for i in range(len(dense))]
+split = [split[i] / total for i in range(len(split))]
+
+print("Zerow", *zerow, sep=", ")
+print("Dense", *dense, sep=", ")
+print("Split", *split, sep=", ")
 

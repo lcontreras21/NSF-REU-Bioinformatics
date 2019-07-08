@@ -6,10 +6,13 @@
 #data = "full"
 data = "subset"
 mode = "train"
-debug = False
+debug = False 
+record_data = True
+
+test_behavior = True
+weights_to_test = [26, 27, 19, 34, 25]
 
 # testing parameters
-
 if mode == "free":
 	tumor_data_size = 200 
 	normal_data_size = 30 
@@ -18,7 +21,7 @@ elif mode == "train":
 	normal_data_size = 584
 
 samples_per_trial = 50
-trials = 3
+
 hidden_size = 50 
 
 # hyperparameters
@@ -61,12 +64,21 @@ text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 
 
 # models to test
-from nn_partial_links import *
+from nn_partial_links import NN 
 from nn_dense import NN_dense
 from nn_split import NN_split
 
-split_dict = "state_dicts/nn_split.pt"
-dense_dict = "state_dicts/nn_dense.pt"
-partial_dict = "state_dicts/nn_partial.pt"
+split_dict = "state_dicts/nn_split_test.pt"
+dense_dict = "state_dicts/nn_dense_test.pt"
+partial_dict = "state_dicts/nn_partial_test.pt"
 
+# where to save run percentages if enabled
+folder_path = "text_files/analysis/"
+percent_save_loc = folder_path + "percentages_modded.txt"
 
+# where to save weights and biases if enabled
+bs_save_loc = folder_path + "biases_similar_modded.txt"
+b_save_loc = folder_path + "biases_modded.txt"
+
+ws_save_loc = folder_path + "weights_similar_modded.txt"
+w_save_loc = folder_path + "weights_modded.txt"

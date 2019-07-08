@@ -5,14 +5,16 @@ and save the results to a file.
 '''
 
 import torch
-from settings import debug
+from settings import *
+from itertools import combinations
+from copy import deepcopy
 
 ### looking at weights and importance.
 # no idea what I'm doing here
 
-f = torch.load("state_dicts/nn_dense.pt")
-g = torch.load("state_dicts/nn_split.pt")
-h = torch.load("state_dicts/nn_partial.pt")
+f = torch.load(dense_dict)
+g = torch.load(split_dict)
+h = torch.load(partial_dict)
 
 # they are ordered dicts with weights and biases
 # only want weights
@@ -38,8 +40,6 @@ split_ws = torch.zeros(50)
 for i, layer in enumerate(split[:-1]):
 	total = layer.sum().item()
 	split_ws[i] = total
-from itertools import combinations
-from copy import deepcopy
 
 def five_lines(data, names, function):
 	special_nums = []
@@ -77,8 +77,8 @@ if debug:
 	print("\nWeights")
 data_to_write, special_nums = five_lines([dense_ws, partial_ws, split_ws], ["dense", "partial", "split"], max)
 
-write_data("text_files/analysis/weights_similar.txt" , data_to_write)
-write_data("text_files/analysis/weights.txt", special_nums)
+write_data(ws_save_loc, data_to_write)
+write_data(w_save_loc, special_nums)
 
 
 split_b = []
@@ -94,6 +94,6 @@ if debug:
 	print("\nBiases")
 data_to_write, special_nums = five_lines([dense_bias, partial_bias, split_bias], ["dense", "partial", "split"], max)
 
-write_data("text_files/analysis/biases_similar.txt", data_to_write)
-write_data("text_files/analysis/biases.txt", special_nums)
+write_data(bs_save_loc, data_to_write)
+write_data(b_save_loc, special_nums)
 

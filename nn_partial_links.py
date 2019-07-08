@@ -93,7 +93,10 @@ def make_mask():
 	gene_indexer = gene_dict()
 	mask = np.array([[0] * len(training_data[0][0])] * len(gene_groups))
 	for group_index, gene_group in enumerate(gene_groups):
-		group_indices = get_gene_indicies(gene_group, gene_indexer)
+		if test_behavior and group_index in weights_to_test:
+			group_indices = []
+		else:
+			group_indices = get_gene_indicies(gene_group, gene_indexer)
 		mask[group_index][group_indices] = 1
 	mask = torch.FloatTensor(mask)
 	return mask

@@ -116,16 +116,19 @@ class NN_split(nn.Module):
 		fc = []  
 		gene_indexes = gene_dict()
 		gene_groups = import_gene_groups()
-		for gene_group in gene_groups:
-			group_indices = get_gene_indicies(gene_group, gene_indexes)
-			self.gene_group_indicies.append(group_indices)
-			# creates linear layers that has input
-			# of gene group size and outputs a 
-			# tensor of size 1
-			fc.append(nn.Linear(len(group_indices), 1))
+		for i, gene_group in enumerate(gene_groups):
+			if test_behavior and i in weights_to_test:
+				continue
+			else:
+				group_indices = get_gene_indicies(gene_group, gene_indexes)
+				self.gene_group_indicies.append(group_indices)
+				# creates linear layers that has input
+				# of gene group size and outputs a 
+				# tensor of size 1
+				fc.append(nn.Linear(len(group_indices), 1))
 		self.linears = nn.ModuleList(fc)
 		self.relu = nn.ReLU()
-		self.fc2 = nn.Linear(hidden_size, 2)
+		self.fc2 = nn.Linear(hidden_size - len(weights_to_test), 2)
 
 
 	def forward(self, input_vector):

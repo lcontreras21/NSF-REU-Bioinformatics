@@ -4,8 +4,9 @@ Check if numbers are repeated and how many times there are overlap
 '''
 from settings import hidden_size
 from copy import deepcopy
+from collections import Counter, OrderedDict
 
-def preprocess(combined=False):
+def process_files():
 	loc = "text_files/analysis/"
 	files = ["weights_similar.txt", "weights.txt", "biases_similar.txt", "biases.txt"]
 	to_return = []
@@ -18,15 +19,13 @@ def preprocess(combined=False):
 		f.close()
 		to_return.append(dist_data)
 	return to_return
-	 
+
 def normalize(d):
 	total = sum(d.values())
 	d = {i:(d[i]/total) for i in d}
 	return d
 
-# Three types of data: dense, split, partial
-import matplotlib.pyplot as plt
-def draw_graphs(data, data_type, title, save_location="diagrams/distribution.pdf", normalized=False):
+def process(data, data_type, normalized=False):
 	# data = [w_s, w, b_s, b]
 	# dists = [split, dense, partial, d-p, d-s, p-s]	
 	dists = [{i:0 for i in range(hidden_size)} for i in range(6)]
@@ -68,7 +67,11 @@ def draw_graphs(data, data_type, title, save_location="diagrams/distribution.pdf
 		for i, dist in enumerate(dists):
 			norm_dist = normalize(dist)
 			dists[i] = norm_dist
+	return dists
 
+# Three types of data: dense, split, partial
+import matplotlib.pyplot as plt
+def draw_graphs(dists, title, save_location="diagrams/distribution.pdf"):
 	# dists = [split, dense, partial, d-p, d-s, p-s]	
 	fig, axs = plt.subplots(3, 2, sharex=True, sharey=True)
 	(ax0, ax1), (ax2, ax3), (ax4, ax5) = axs
@@ -94,12 +97,56 @@ def draw_graphs(data, data_type, title, save_location="diagrams/distribution.pdf
 	ax5.set_title("Zero-Split Overlap")
 	plt.savefig(save_location)
 
+def biggest_weights(n, pretty_print=False):
+	# Necessary stuff to be able to get info from any file
+	processed_data = process_files()
+	dists = process(processed_data, "weights", normalized=False)
+	
+	# returning top five biggest weights
+	top = []
+	for dist in dists:
+		top.append(dict(Counter(dist).most_common(n)))
+	for i, item in enumerate(top):
+		x = sorted(item.items(), key=lambda x: x[1], reverse=True)
+		output = "{"
+		for pair in x:
+			output += "{:02}".format(pair[0]) + ": " + "{:02}".format(pair[1]) + ", "
+		output += "\b\b}"
+		if pretty_print:
+			print(output)
+		top[i] = x
+	# top = [split, dense, zerow, dz, ds, zs] dicts 
+	return top[:n]
+
+def closeness():
+	processed_dists = biggest_weights(50)
+	split = processed_dists[0]
+	zerow = processed_dists[2]
+	
+	same = []
+	close = []
+
+	for i, (key, value) in enumerate(split):
+		try:
+			if key == zerow[i - 1][0]:
+				close.append((key, value, zerow[i - 1][1]))
+			elif key == zerow[i + 1][0]:
+				close.append((key, value, zerow[i + 1][1]))
+		except:
+			continue
+		if key == zerow[i][0]:
+			same.append((key, value, zerow[i][1]))
+	print(same)
+	print(close)
+	print(processed_dists[5][:5])
 
 if __name__ == "__main__":
-	processed_data = preprocess()
-	draw_graphs(processed_data, "weights",  "Top 5 Weights", save_location="diagrams/w_unnormalized_dist.pdf")
-	draw_graphs(processed_data, "weights", "Top 5 Weights Normalized", save_location="diagrams/w_normalized_dist.pdf", normalized=True)
+	#processed_data = process_files()
+	#dists_unnorm = process(processed_data, "weights", normalized=False)
+	#draw_graphs(dists_unnorm,  "Top 5 Weights", save_location="diagrams/w_unnormalized_dist.pdf")
 
-	draw_graphs(processed_data, "biases",  "Top 5 Biases", save_location="diagrams/b_unnormalized_dist.pdf")
-	draw_graphs(processed_data, "biases", "Top 5 Weights Normalized", save_location="diagrams/b_normalized_dist.pdf", normalized=True)
 	
+	#dists_norm = process(processed_data, "weights", normalized=True)
+	#draw_graphs(dists_norm,  "Top 5 Weights", save_location="diagrams/w_normalized_dist.pdf")
+	#x = biggest_weights(50)	
+	closeness()

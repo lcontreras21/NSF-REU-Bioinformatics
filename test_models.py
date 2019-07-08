@@ -50,6 +50,8 @@ used_normal = normal_data_size
 
 testing_data = []
 # test with even data to see results
+from nn_partial_links import add_to_data, make_gene_vector, make_target, label_to_ix 
+
 if mode[0] != "t":
 	add_to_data(testing_data, samples_per_trial, samples_per_trial)
 else:
@@ -104,9 +106,12 @@ def test_model(model):
 	if debug:
 		print(percent_correct)
 
-	f = open("text_files/analysis/percentages.txt", "a")
-	f.write(model.__str__() + "\t" + str(true_pos/total_pos) + "\t" + str(true_neg/total_neg) + "\t" + str(percent_correct) + "\n")
-	f.close()
+	if record_data: 
+		if debug:
+			print("Recording data")
+		f = open(percent_save_loc, "a")
+		f.write(model.__str__() + "\t" + str(true_pos/total_pos) + "\t" + str(true_neg/total_neg) + "\t" + str(percent_correct) + "\n")
+		f.close()
 
 if debug:
 	print()
