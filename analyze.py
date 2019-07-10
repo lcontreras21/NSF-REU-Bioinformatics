@@ -4,7 +4,7 @@ Check if numbers are repeated and how many times there are overlap
 '''
 from settings import *
 from copy import deepcopy
-from collections import Counter, OrderedDict
+from collections import Counter
 
 def process_files():
 	files = [ws_save_loc, w_save_loc, bs_save_loc, b_save_loc]
@@ -70,7 +70,7 @@ def process(data, data_type, normalized=False):
 
 # Three types of data: dense, split, partial
 import matplotlib.pyplot as plt
-def draw_graphs(dists, title, save_location="diagrams/distribution.pdf"):
+def draw_graph(dists, title, save_location="diagrams/distribution.pdf"):
 	# dists = [split, dense, partial, d-p, d-s, p-s]	
 	fig, axs = plt.subplots(3, 2, sharey=True) #,sharex=True, sharey=True)
 	(ax0, ax1), (ax2, ax3), (ax4, ax5) = axs
@@ -99,6 +99,22 @@ def draw_graphs(dists, title, save_location="diagrams/distribution.pdf"):
 	ax5.bar(list(dists[5].keys()), list(dists[5].values()), color='tab:purple')
 	ax5.set_title("Zero-Split Overlap")
 	plt.savefig(save_location)
+
+def draw_graphs(which="both"):
+	# which can be one of {'both', 'weights', biases'}
+	processed_data = process_files()
+	if which == "weights" or which == "both":
+		dists_unnorm = process(processed_data, "weights", normalized=False)
+		draw_graph(dists_unnorm,  "Top 5 Weights", save_location="diagrams/w_unnormalized_dist" + modded + ".pdf")
+
+		dists_norm = process(processed_data, "weights", normalized=True)
+		draw_graph(dists_norm,  "Top 5 Weights", save_location="diagrams/w_normalized_dist" + modded + ".pdf")
+	elif which == "biases" or which == "both":
+		dists_unnorm = process(processed_data, "biases", normalized=False)
+		draw_graph(dists_unnorm,  "Top 5 Biases", save_location="diagrams/b_unnormalized_dist" + modded + ".pdf")
+
+		dists_norm = process(processed_data, "biases", normalized=True)
+		draw_graph(dists_norm,  "Top 5 Biases", save_location="diagrams/b_normalized_dist" + modded + ".pdf")
 
 def biggest_weights(n, pretty_print=False):
 	# Necessary stuff to be able to get info from any file
@@ -139,8 +155,11 @@ def closeness():
 			continue
 		if key == zerow[i][0]:
 			same.append((key, value, zerow[i][1]))
+	print("If the split and the zero-weights models had the same weights at the same index")
 	print(same)
+	print("If the split and the zero-weights models have a similar weight index")
 	print(close)
+	print("How many times the two models overlapped during the same session")
 	print(processed_dists[5][:5])
 
 def print_percentages():
@@ -155,35 +174,52 @@ def print_percentages():
 		data = line.split()
 		name = data[0]
 		data = list(map(float, data[1:]))
-	if name == "Zero-weights":
-		zerow[0] += data[0]
-		zerow[1] += data[1]
-		zerow[2] += data[2]
-	elif name == "Dense":
-		dense[0] += data[0]
-		dense[1] += data[1]
-		dense[2] += data[2]
-	elif name == "Split":
-		split[0] += data[0]
-		split[1] += data[1]
-		split[2] += data[2]
+		if name == "Zero-weights":
+			zerow[0] += data[0]
+			zerow[1] += data[1]
+			zerow[2] += data[2]
+		elif name == "Dense":
+			dense[0] += data[0]
+			dense[1] += data[1]
+			dense[2] += data[2]
+		elif name == "Split":
+			split[0] += data[0]
+			split[1] += data[1]
+			split[2] += data[2]
 	total = total / 3
-	zerow = [zerow[i] / total for i in range(len(zerow))]
-	dense = [dense[i] / total for i in range(len(dense))]
-	split = [split[i] / total for i in range(len(split))]
+	zerow = ["{0:.4f}".format(zerow[i] / total) for i in range(len(zerow))]
+	dense = ["{0:.4f}".format(dense[i] / total) for i in range(len(dense))]
+	split = ["{0:.4f}".format(split[i] / total) for i in range(len(split))]
 
 	print("Zerow", *zerow, sep=", ")
 	print("Dense", *dense, sep=", ")
 	print("Split", *split, sep=", ")
 
+def verify_removed_weights():
+	if test_behavior: 
+		processed_data = process_files()
+		# only interested in the main files, not overlap
+		# that data is at first and third index
+		data = [processed_data[1], processed_data[3]]
+		name = ["weights", "biases"]
+
+		# check if any of the weights_to_test are in there
+		count = 0
+		for i, dataset in enumerate(data):
+			for ii, line in enumerate(dataset):
+				model_name, big_weights = line
+				error = name[i] + " " + model_name + " " + str(ii) + "\n"
+				mistakes = [weight for weight in weights_to_test if weight in big_weights and model_name != "dense"]
+				if len(mistakes) != 0:	
+					print(error.join([str(x) for x in mistakes]))
+				count += len(mistakes)
+		if count == 0:
+			print("Weights were properly removed")
+	else:
+		print("No need to test important weights. Make sure this is intentional.")
 
 if __name__ == "__main__":
-	processed_data = process_files()
-	dists_unnorm = process(processed_data, "weights", normalized=False)
-	draw_graphs(dists_unnorm,  "Top 5 Weights", save_location="diagrams/w_unnormalized_dist_modded.pdf")
-
-	
-	dists_norm = process(processed_data, "weights", normalized=True)
-	draw_graphs(dists_norm,  "Top 5 Weights", save_location="diagrams/w_normalized_dist_modded.pdf")
-	#x = biggest_weights(50)	
-	closeness()
+	draw_graphs(which="weights")
+	#closeness()
+	#verify_removed_weights()
+	#print_percentages()
