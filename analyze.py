@@ -2,16 +2,15 @@
 Open the saved data from the files and analyze them
 Check if numbers are repeated and how many times there are overlap
 '''
-from settings import hidden_size
+from settings import *
 from copy import deepcopy
 from collections import Counter, OrderedDict
 
 def process_files():
-	loc = "text_files/analysis/"
-	files = ["weights_similar.txt", "weights.txt", "biases_similar.txt", "biases.txt"]
+	files = [ws_save_loc, w_save_loc, bs_save_loc, b_save_loc]
 	to_return = []
 	for name in files:
-		f = open(loc + name, "r")
+		f = open(name, "r")
 		dist_data = []
 		for line in f:
 			data = line.split()
@@ -73,12 +72,16 @@ def process(data, data_type, normalized=False):
 import matplotlib.pyplot as plt
 def draw_graphs(dists, title, save_location="diagrams/distribution.pdf"):
 	# dists = [split, dense, partial, d-p, d-s, p-s]	
-	fig, axs = plt.subplots(3, 2, sharex=True, sharey=True)
+	fig, axs = plt.subplots(3, 2, sharey=True) #,sharex=True, sharey=True)
 	(ax0, ax1), (ax2, ax3), (ax4, ax5) = axs
 	fig.suptitle("Distribution of " + title)
 	fig.subplots_adjust(hspace=0.5)
+	plt.rcParams['xtick.labelsize'] = 4
 
-	ax0.bar(list(dists[0].keys()), list(dists[0].values()), color='r')
+
+	ax0.bar(list(dists[0].keys()), list(dists[0].values()), color='r', align='center')
+	#ax0.set_xticks(ticks=list(dists[0].keys()))
+	ax0.set_xticklabels(labels=list(dists[0].keys()), minor=True, rotation='vertical')
 	ax0.set_title("Split Model")
 	
 	ax1.bar(list(dists[1].keys()), list(dists[1].values()), color='g')
@@ -140,13 +143,47 @@ def closeness():
 	print(close)
 	print(processed_dists[5][:5])
 
+def print_percentages():
+	f = open(percent_save_loc, "r")
+	# info with list of [sensitivity, specificity, correctness]
+	zerow = [0, 0, 0]
+	dense = [0, 0, 0]
+	split = [0, 0, 0]
+	total = 0
+	for line in f:
+		total += 1
+		data = line.split()
+		name = data[0]
+		data = list(map(float, data[1:]))
+	if name == "Zero-weights":
+		zerow[0] += data[0]
+		zerow[1] += data[1]
+		zerow[2] += data[2]
+	elif name == "Dense":
+		dense[0] += data[0]
+		dense[1] += data[1]
+		dense[2] += data[2]
+	elif name == "Split":
+		split[0] += data[0]
+		split[1] += data[1]
+		split[2] += data[2]
+	total = total / 3
+	zerow = [zerow[i] / total for i in range(len(zerow))]
+	dense = [dense[i] / total for i in range(len(dense))]
+	split = [split[i] / total for i in range(len(split))]
+
+	print("Zerow", *zerow, sep=", ")
+	print("Dense", *dense, sep=", ")
+	print("Split", *split, sep=", ")
+
+
 if __name__ == "__main__":
-	#processed_data = process_files()
-	#dists_unnorm = process(processed_data, "weights", normalized=False)
-	#draw_graphs(dists_unnorm,  "Top 5 Weights", save_location="diagrams/w_unnormalized_dist.pdf")
+	processed_data = process_files()
+	dists_unnorm = process(processed_data, "weights", normalized=False)
+	draw_graphs(dists_unnorm,  "Top 5 Weights", save_location="diagrams/w_unnormalized_dist_modded.pdf")
 
 	
-	#dists_norm = process(processed_data, "weights", normalized=True)
-	#draw_graphs(dists_norm,  "Top 5 Weights", save_location="diagrams/w_normalized_dist.pdf")
+	dists_norm = process(processed_data, "weights", normalized=True)
+	draw_graphs(dists_norm,  "Top 5 Weights", save_location="diagrams/w_normalized_dist_modded.pdf")
 	#x = biggest_weights(50)	
 	closeness()

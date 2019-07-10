@@ -14,7 +14,7 @@ import random
 import pickle
 from tqdm import tqdm
 import numpy as np
-
+from copy import deepcopy
 # settings file that has what files to use and hyperparameters
 from settings import *
 
@@ -89,7 +89,7 @@ def get_gene_indicies(gene_group, gene_indexer):
 	indices.sort()
 	return indices
 
-def make_mask():
+def make_mask(training_data, gene_groups):
 	gene_indexer = gene_dict()
 	mask = np.array([[0] * len(training_data[0][0])] * len(gene_groups))
 	for group_index, gene_group in enumerate(gene_groups):
@@ -124,8 +124,7 @@ class NN(nn.Module):
 	def __str__(self):
 		return "Zero-weights"
 
-
-if __name__ == "__main__":
+def train_partial_model():
 	start_time = time.monotonic()
 
 	### Hyperparameters
@@ -158,11 +157,12 @@ if __name__ == "__main__":
 
 	if debug:
 		print("Doing some calculations")
-	mask = make_mask()
+	mask = make_mask(training_data, gene_groups)
 
 	# set the starting weights to model the biology
 	if debug:
 		print("Setting the weights of the model")
+	
 	set_weights(model, mask)
 	# train the model
 	if debug:
@@ -185,7 +185,7 @@ if __name__ == "__main__":
 			loss.backward()
 			set_weights(model, mask)
 			optimizer.step()
-	
+
 	if debug:
 		print()
 		print("Saving the model to file")
@@ -194,3 +194,6 @@ if __name__ == "__main__":
 	if debug:
 		print("Runtime:", timedelta(seconds=end_time - start_time))
 		print()
+
+if __name__ == "__main__":
+	train_partial_model()

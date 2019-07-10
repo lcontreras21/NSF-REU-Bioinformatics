@@ -63,11 +63,6 @@ text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 #hidden_size = 186 
 
 
-# models to test
-from nn_partial_links import NN 
-from nn_dense import NN_dense
-from nn_split import NN_split
-
 split_dict = "state_dicts/nn_split_test.pt"
 dense_dict = "state_dicts/nn_dense_test.pt"
 partial_dict = "state_dicts/nn_partial_test.pt"

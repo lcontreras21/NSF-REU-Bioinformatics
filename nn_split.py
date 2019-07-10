@@ -105,7 +105,13 @@ from operator import itemgetter
 def split_data(input_vector, gene_group_indicies):
 	data = input_vector.tolist()[0]
 	#split = [list(map(data.__getitem__, group_indices)) for group_indices in gene_group_indicies]
-	split = [list(itemgetter(*group_indices)(data)) for group_indices in gene_group_indicies]
+	split = []
+	for group_indices in gene_group_indicies:
+		try:
+			trimmed_data = list(itemgetter(*group_indices)(data))
+			split.append(trimmed_data)
+		except:
+			split.append([])
 	return split
 
 # NN class 
@@ -118,7 +124,10 @@ class NN_split(nn.Module):
 		gene_groups = import_gene_groups()
 		for i, gene_group in enumerate(gene_groups):
 			if test_behavior and i in weights_to_test:
-				continue
+				fc.append(nn.Linear(1,1))
+				fc[-1].weight = nn.Parameter(torch.FloatTensor([0]), requires_grad=False)
+				fc[-1].bias = nn.Parameter(torch.FloatTensor([0]), requires_grad=False)
+				self.gene_group_indicies.append([])
 			else:
 				group_indices = get_gene_indicies(gene_group, gene_indexes)
 				self.gene_group_indicies.append(group_indices)
@@ -130,13 +139,12 @@ class NN_split(nn.Module):
 		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(hidden_size - len(weights_to_test), 2)
 
-
 	def forward(self, input_vector):
 		hidden = [] # list of tensors
 		# here we must split the input_vector and active it
 		# using the specific linear function it belongs to
 		processed_data = split_data(input_vector, self.gene_group_indicies)
-		hidden = [self.linears[index](torch.FloatTensor(processed_data[index])) for index in range(len(self.gene_group_indicies))]
+		hidden = [self.linears[index](torch.FloatTensor(processed_data[index])) for index in range(len(self.gene_group_indicies)) if index not in weights_to_test]
 		# concatenate all the linear layers to make a 
 		# tensor with size of gene groups
 		hidden = torch.stack(hidden, 1)
@@ -149,7 +157,7 @@ class NN_split(nn.Module):
 	def __str__(self):
 		return "Split"
 
-if __name__ == "__main__":
+def train_split_model():
 	start_time = time.monotonic()
 
 	### Hyperparameters
@@ -168,7 +176,7 @@ if __name__ == "__main__":
 	model = NN_split(hidden_size, output_size)
 	model = model.train()
 	loss_function = nn.CrossEntropyLoss()
-	optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+	optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate)
 	
 	if debug:
 		print("Loading the data", end='', flush=True)
@@ -209,3 +217,6 @@ if __name__ == "__main__":
 	if debug:
 		print("Runtime:", timedelta(seconds=end_time - start_time))
 		print()
+
+if __name__ == "__main__":
+	train_split_model()

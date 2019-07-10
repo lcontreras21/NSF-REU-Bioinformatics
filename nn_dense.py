@@ -49,7 +49,7 @@ def make_target(label, label_to_ix):
 # convert tumor or no tumor to int value
 label_to_ix = {"Tumor": 0, "Normal": 1}
 
-if __name__ == "__main__":
+def train_dense_model():
 	start_time = time.monotonic()
 
 	# hyper parameters
@@ -111,3 +111,6 @@ if __name__ == "__main__":
 	if debug:
 		print("Time elapsed: ", timedelta(seconds=time.monotonic() - start_time))
 		print()
+	
+if __name__ == "__main__":
+	train_dense_model()
