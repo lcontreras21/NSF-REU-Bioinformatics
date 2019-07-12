@@ -1,7 +1,7 @@
 # Bioinformatics NSF REU Project
 
 ## Title and Description
-######Development of Machine Learning Models for Cancer Driver Identification
+###### Development of Machine Learning Models for Cancer Driver Identification
 Large-scale cancer genome sequencing projects have resulted in the discovery of numerous cancer-specific genetic changes. However, it remains unclear how many of these genetic changes contribute to tumorigenesis.
 
 In this project, the goal will be to leverage large omics databases and existing biological knowledge to learn an interpretable machine learning model that can differentiate between cancer samples and normal samples based on these genetic changes. Unlike previous black box models, the goal is to build a model that will be interpretable and will enable mechanistic interpretation by explaining how specific genetic changes contribute to individual cancer processes. The student’s project will contribute to a larger effort for cancer drug target discovery.
