@@ -71,43 +71,25 @@ def test_models():
 	
 	tumor_data_size = 1994
 	normal_data_size = 146
-
-	model_partial = NN(input_size, hidden_size, output_size)
-	model_partial.load_state_dict(torch.load(partial_dict))
-
-	model_dense = NN_dense(input_size, hidden_size, output_size)
-	model_dense.load_state_dict(torch.load(dense_dict))
-
-	model_split = NN_split(hidden_size, output_size)
-	model_split.load_state_dict(torch.load(split_dict))
-
-	model_dense.eval()
-	model_partial.eval()
-	model_split.eval()
-
+	
 	testing_data = []
 	add_to_data(testing_data, tumor_data_size, normal_data_size)
 	random.shuffle(testing_data)
-
+	
+	models = [NN(input_size, hidden_size, output_size), 
+			NN_dense(input_size, hidden_size, output_size), 
+			NN_split(hidden_size, output_size)]
+	
+	for i, model in enumerate(models):
+		model.load_state_dict(torch.load(stored_dict_locs[str(model)]))
+		model.eval()
+		if debug:
+			print()
+			print(str(model) + " model")
+		test_model(model, testing_data)
+	
 	if debug:
-		print()
-		print("Zero-weights model")
-	test_model(model_partial, testing_data)
-	if debug:
-		print()
-
-		print("Dense model")
-	test_model(model_dense, testing_data)
-	if debug:
-		print()
-
-		print("Split model")
-	test_model(model_split, testing_data)
-	if debug:
-		print()
-
-		end_time = time.monotonic()
-		print("Runtime:", timedelta(seconds=end_time - start_time))
+		print("\nRuntime:", timedelta(seconds=time.monotonic() - start_time))
 
 if __name__ == "__main__":
 	test_models()	

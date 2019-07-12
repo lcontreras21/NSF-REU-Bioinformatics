@@ -36,16 +36,15 @@ def make_distributions(data, data_type, normalized=False):
 	elif data_type == "biases":
 		x = data[2] + data[3]
 	for data_sample in x:
-		name = key[data_sample[0]]
-		vals = data_sample[1]
+		name, vals = key[data_sample[0]], data_sample[1]
 		for i in vals:
 			dists[name][i] += 1
 	if normalized == "both":
-		dists_norm =[normalize(dists[i]) for i in range(len(dists))]
+		dists_norm =[normalize(dists[i]) for i in range(6)]
 		return dists, dists_norm
 	
 	if normalized:
-		dists = [normalize(dists[i]) for i in range(len(dists))]
+		dists = [normalize(dists[i]) for i in range(6)]
 		
 	return dists
 
@@ -70,15 +69,15 @@ def draw_graph(dists, title, save_location="diagrams/distribution.pdf"):
 	
 	plt.savefig(save_location)
 
-
 def draw_graphs(which="both"):
 	# which can be one of {'both', 'weights', biases'}
 	processed_data = process_files()
 	key = {"weights":["weights"], "biases":["biases"], "both": ["weights", "biases"]}
-	for i in key[which]:
+	configs = ["_unnormalized_dist_2", "normalized_dist_2"] 
+	for data in key[which]:
 		unnorm, norm = make_distributions(processed_data, i, normalized="both")
-		draw_graph(unnorm,  "Top 5 " + i.capitalize(), save_location="diagrams/" + i + "_unnormalized_dist_2" + modded + ".pdf")
-		draw_graph(norm,  "Top 5 " + i.capitalize() + " Normalized", save_location="diagrams/" + i + "_normalized_dist_2" + modded + ".pdf")
+		for config in configs:
+			draw_graph(unnorm,  "Top 5 " + data.capitalize(), save_location=image_path + data + config + modded + ".pdf")
 
 def biggest_weights(n, pretty_print=False):
 	# Necessary stuff to be able to get info from any file

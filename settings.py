@@ -5,9 +5,9 @@
 
 data = "subset"
 mode = "train"
-debug, record_data, test_behavior = False, True, False 
+debug, record_data, test_behavior = False, True, True 
 if test_behavior:
-	weights_to_test = [26, 27, 19, 34, 25]
+	weights_to_test = [26, 27, 19, 34, 25, 3, 8, 13]
 else:
 	weights_to_test = []
 
@@ -40,22 +40,23 @@ text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 #text_gene_groups = "text_files/c2.cp.kegg.v6.2.symbols.txt"
 #hidden_size = 186 
 
-split_dict = "state_dicts/nn_split.pt"
-dense_dict = "state_dicts/nn_dense.pt"
-partial_dict = "state_dicts/nn_partial.pt"
+stored_dict_locs = {name:"state_dicts/nn_" + name + ".pt" for name in ["Split", "Dense", "Zero-weights"]}
 
 # where to save run percentages if enabled
-folder_path = "text_files/analysis2/"
+text_path = "text_files/analysis/mod2/"
+image_path = "diagrams/mod2/"
 modded = ""
 replace = "_modded"
 if test_behavior:
 	modded = replace
 
-percent_save_loc = folder_path + "percentages" + modded + ".txt"
+percent_save_loc = text_path + "percentages" + modded + ".txt"
 
 # where to save weights and biases if enabled
-bs_save_loc = folder_path + "biases_similar" + modded + ".txt"
-b_save_loc = folder_path + "biases" + modded + ".txt"
+bs_save_loc = text_path + "biases_similar" + modded + ".txt"
+b_save_loc = text_path + "biases" + modded + ".txt"
 
-ws_save_loc = folder_path + "weights_similar" + modded + ".txt"
-w_save_loc = folder_path + "weights" + modded + ".txt"
+ws_save_loc = text_path + "weights_similar" + modded + ".txt"
+w_save_loc = text_path + "weights" + modded + ".txt"
+
+

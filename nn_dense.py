@@ -107,7 +107,7 @@ def train_dense_model():
 	if debug:
 		print()
 		print("Saving the model to file")
-	torch.save(model.state_dict(), dense_dict)
+	torch.save(model.state_dict(), stored_dict_locs[str(model)])
 	if debug:
 		print("Time elapsed: ", timedelta(seconds=time.monotonic() - start_time))
 		print()

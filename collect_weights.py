@@ -10,34 +10,25 @@ from itertools import combinations
 from copy import deepcopy
 
 ### looking at weights and importance.
-
 def process():
-	# they are ordered dicts with weights and biases
-	dicts = [torch.load(dense_dict), torch.load(partial_dict), torch.load(split_dict)]
+	name_list = ["Dense", "Zero-weights", "Split"]
+	dicts = [torch.load(stored_dict_locs[model_name]) for model_name in name_list]
 
 	# weight_data = [dense, partial, split]
 	weight_data = [dicts[0]["fc1.weight"], dicts[1]["fc1.weight"], []]
+	# adding data from split model
+	weight_data[2] = [dicts[2][layer] for layer in dicts[2] if "weight" in layer]
 
-	for layer in dicts[2]:
-		if "weight" in layer: 
-			weight_data[2].append(dicts[2][layer])
-
-	# now time to get weight sums for each node
+	### Weight Sums
 	weights = [weight_data[0].sum(1), weight_data[1].sum(1), torch.zeros(50)]
+	# summing all data from split model
 	for i, layer in enumerate(weight_data[2][:-1]):
-		total = layer.sum().item()
-		weights[2][i] = total
+		weights[2][i] = layer.sum().item()
 
-	# bias = [dense, partial, split"]
+	# Bias Sums
 	biases = [dicts[0]["fc1.bias"], dicts[1]["fc1.bias"], torch.zeros(50)]
+	biases[2] = torch.FloatTensor([dicts[2][layer].item() for layer in list(dicts[2].keys())[:-2] if "bias" in layer])
 
-	split_b = []
-	for i in dicts[2]:
-		count = 0
-		if "bias" in i:
-			split_b.append(dicts[2][i])	
-	for i, layer in enumerate(split_b[:-1]):
-		biases[2][i] = layer.item()
 	return weights, biases
 
 def five_lines(data, names, function):

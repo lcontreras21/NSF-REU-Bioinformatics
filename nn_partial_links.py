@@ -189,7 +189,7 @@ def train_partial_model():
 	if debug:
 		print()
 		print("Saving the model to file")
-	torch.save(model.state_dict(), partial_dict)
+	torch.save(model.state_dict(), stored_dict_locs[str(model)])
 	end_time = time.monotonic()
 	if debug:
 		print("Runtime:", timedelta(seconds=end_time - start_time))
