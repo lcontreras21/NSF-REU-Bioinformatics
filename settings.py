@@ -5,8 +5,12 @@
 
 data = "subset"
 mode = "train"
-debug, record_data, test_behavior = False, False, False 
-weights_to_test = [26, 27, 19, 34, 25]
+debug, record_data, test_behavior = False, True, False 
+if test_behavior:
+	weights_to_test = [26, 27, 19, 34, 25]
+else:
+	weights_to_test = []
+
 
 # hyperparameters
 input_size, hidden_size, output_size = 35728, 50, 2
@@ -41,10 +45,11 @@ dense_dict = "state_dicts/nn_dense.pt"
 partial_dict = "state_dicts/nn_partial.pt"
 
 # where to save run percentages if enabled
-folder_path = "text_files/analysis/"
+folder_path = "text_files/analysis2/"
 modded = ""
+replace = "_modded"
 if test_behavior:
-	modded = "_modded"
+	modded = replace
 
 percent_save_loc = folder_path + "percentages" + modded + ".txt"
 

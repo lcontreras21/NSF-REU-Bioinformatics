@@ -5,9 +5,9 @@ Check if numbers are repeated and how many times there are overlap
 from settings import *
 from copy import deepcopy
 from collections import Counter
+import matplotlib.pyplot as plt
 
-def process_files():
-	files = [ws_save_loc, w_save_loc, bs_save_loc, b_save_loc]
+def process_files(files=[ws_save_loc, w_save_loc, bs_save_loc, b_save_loc]):
 	to_return = []
 	for name in files:
 		f = open(name, "r")
@@ -24,102 +24,66 @@ def normalize(d):
 	d = {i:(d[i]/total) for i in d}
 	return d
 
-def process(data, data_type, normalized=False):
+def make_distributions(data, data_type, normalized=False):
+	# normalized can be True, False, or "both"
 	# data = [w_s, w, b_s, b]
 	# dists = [split, dense, partial, d-p, d-s, p-s]	
+	key = {"split": 0, "dense": 1, "partial": 2, 
+			"dense-partial": 3, "dense-split": 4, "partial-split": 5}
 	dists = [{i:0 for i in range(hidden_size)} for i in range(6)]
 	if data_type == "weights":
 		x = data[0] + data[1]
 	elif data_type == "biases":
 		x = data[2] + data[3]
 	for data_sample in x:
-		name = data_sample[0]
+		name = key[data_sample[0]]
 		vals = data_sample[1]
-
-		if name == "split":
-			for i in vals:
-				dists[0][i] += 1
-
-		elif name == "dense":
-			for i in vals:
-				dists[1][i] += 1
-
-		elif name == "partial":
-			for i in vals:
-				dists[2][i] += 1
-
-		elif name == "dense-partial":
-			for i in vals:
-				dists[3][i] += 1
-
-		elif name == "dense-split":
-			for i in vals:
-				dists[4][i] += 1
-
-		elif name == "partial-split":
-			for i in vals:
-				dists[5][i] += 1
-		else:
-			raise ValueError("Something went wrong in the files here for the analysis.")
-
+		for i in vals:
+			dists[name][i] += 1
+	if normalized == "both":
+		dists_norm =[normalize(dists[i]) for i in range(len(dists))]
+		return dists, dists_norm
+	
 	if normalized:
-		for i, dist in enumerate(dists):
-			norm_dist = normalize(dist)
-			dists[i] = norm_dist
+		dists = [normalize(dists[i]) for i in range(len(dists))]
+		
 	return dists
 
 # Three types of data: dense, split, partial
-import matplotlib.pyplot as plt
 def draw_graph(dists, title, save_location="diagrams/distribution.pdf"):
-	# dists = [split, dense, partial, d-p, d-s, p-s]	
+	# dists = [split, dense, partial, d-p, d-s, p-s]i
+	names = ["Split Model", "Dense Model", "Zero-weights Model", 
+			"Dense-Zero Overlap", "Dense-Split Overlap", "Zero-Split Overlap"]
+	colors = ["r", "g", "b", "tab:grey", "tab:brown", "tab:purple"]
+	
 	fig, axs = plt.subplots(3, 2, sharey=True) #,sharex=True, sharey=True)
-	(ax0, ax1), (ax2, ax3), (ax4, ax5) = axs
-	fig.suptitle("Distribution of " + title)
+	axs = axs.tolist()
+	axs_list = [i for j in axs for i in j]
+	fig.suptitle("Distribution of " + title + " " + modded.capitalize())
 	fig.subplots_adjust(hspace=0.5)
 	plt.rcParams['xtick.labelsize'] = 4
 
-
-	ax0.bar(list(dists[0].keys()), list(dists[0].values()), color='r', align='center')
-	#ax0.set_xticks(ticks=list(dists[0].keys()))
-	ax0.set_xticklabels(labels=list(dists[0].keys()), minor=True, rotation='vertical')
-	ax0.set_title("Split Model")
+	for index, ax in enumerate(axs_list):
+		ax.bar(list(dists[index].keys()), list(dists[index].values()), color=colors[index], align='center')
+		ax.set_title(names[index])
+		ax.set_xticklabels(labels=list(dists[index].keys()), minor=True, rotation='vertical')
 	
-	ax1.bar(list(dists[1].keys()), list(dists[1].values()), color='g')
-	ax1.set_title("Dense Model")
-	
-	ax2.bar(list(dists[2].keys()), list(dists[2].values()), color='b')
-	ax2.set_title("Zero-weights Model")
-
-	ax3.bar(list(dists[3].keys()), list(dists[3].values()), color='tab:grey')
-	ax3.set_title("Dense-Zero Overlap")
-	
-	ax4.bar(list(dists[4].keys()), list(dists[4].values()), color='tab:brown')
-	ax4.set_title("Dense-Split Overlap")
-	
-	ax5.bar(list(dists[5].keys()), list(dists[5].values()), color='tab:purple')
-	ax5.set_title("Zero-Split Overlap")
 	plt.savefig(save_location)
+
 
 def draw_graphs(which="both"):
 	# which can be one of {'both', 'weights', biases'}
 	processed_data = process_files()
-	if which == "weights" or which == "both":
-		dists_unnorm = process(processed_data, "weights", normalized=False)
-		draw_graph(dists_unnorm,  "Top 5 Weights", save_location="diagrams/w_unnormalized_dist" + modded + ".pdf")
-
-		dists_norm = process(processed_data, "weights", normalized=True)
-		draw_graph(dists_norm,  "Top 5 Weights", save_location="diagrams/w_normalized_dist" + modded + ".pdf")
-	elif which == "biases" or which == "both":
-		dists_unnorm = process(processed_data, "biases", normalized=False)
-		draw_graph(dists_unnorm,  "Top 5 Biases", save_location="diagrams/b_unnormalized_dist" + modded + ".pdf")
-
-		dists_norm = process(processed_data, "biases", normalized=True)
-		draw_graph(dists_norm,  "Top 5 Biases", save_location="diagrams/b_normalized_dist" + modded + ".pdf")
+	key = {"weights":["weights"], "biases":["biases"], "both": ["weights", "biases"]}
+	for i in key[which]:
+		unnorm, norm = make_distributions(processed_data, i, normalized="both")
+		draw_graph(unnorm,  "Top 5 " + i.capitalize(), save_location="diagrams/" + i + "_unnormalized_dist_2" + modded + ".pdf")
+		draw_graph(norm,  "Top 5 " + i.capitalize() + " Normalized", save_location="diagrams/" + i + "_normalized_dist_2" + modded + ".pdf")
 
 def biggest_weights(n, pretty_print=False):
 	# Necessary stuff to be able to get info from any file
 	processed_data = process_files()
-	dists = process(processed_data, "weights", normalized=False)
+	dists = make_distributions(processed_data, "weights", normalized=False)
 	
 	# returning top five biggest weights
 	top = []
@@ -139,11 +103,8 @@ def biggest_weights(n, pretty_print=False):
 
 def closeness():
 	processed_dists = biggest_weights(50)
-	split = processed_dists[0]
-	zerow = processed_dists[2]
-	
-	same = []
-	close = []
+	split, zerow = processed_dists[0], processed_dists[2]	
+	same, close = [], []
 
 	for i, (key, value) in enumerate(split):
 		try:
@@ -155,45 +116,31 @@ def closeness():
 			continue
 		if key == zerow[i][0]:
 			same.append((key, value, zerow[i][1]))
-	print("If the split and the zero-weights models had the same weights at the same index")
-	print(same)
-	print("If the split and the zero-weights models have a similar weight index")
-	print(close)
-	print("How many times the two models overlapped during the same session")
-	print(processed_dists[5][:5])
+	print("If the split and the zero-weights models had", 
+			"the same weights at the same index\n", same)
+	print("If the split and the zero-weights models have",
+			"a similar weight index\n", close)
+	print("How many times the two models overlapped during",
+			"the same session\n", processed_dist[5][:5])
 
 def print_percentages():
 	f = open(percent_save_loc, "r")
 	# info with list of [sensitivity, specificity, correctness]
-	zerow = [0, 0, 0]
-	dense = [0, 0, 0]
-	split = [0, 0, 0]
+	names = ["Zerow", "Dense", "Split"]
+	percents = [[0]*3, [0]*3, [0]*3] #zerow, dense, split
+	key = {"Zero-weights": 0, "Dense": 1, "Split": 2}
 	total = 0
 	for line in f:
 		total += 1
 		data = line.split()
-		name = data[0]
+		name = key[data[0]]
 		data = list(map(float, data[1:]))
-		if name == "Zero-weights":
-			zerow[0] += data[0]
-			zerow[1] += data[1]
-			zerow[2] += data[2]
-		elif name == "Dense":
-			dense[0] += data[0]
-			dense[1] += data[1]
-			dense[2] += data[2]
-		elif name == "Split":
-			split[0] += data[0]
-			split[1] += data[1]
-			split[2] += data[2]
+		percents[name] = [percents[name][i] + data[i] for i in range(3)]
+	f.close()
 	total = total / 3
-	zerow = ["{0:.4f}".format(zerow[i] / total) for i in range(len(zerow))]
-	dense = ["{0:.4f}".format(dense[i] / total) for i in range(len(dense))]
-	split = ["{0:.4f}".format(split[i] / total) for i in range(len(split))]
-
-	print("Zerow", *zerow, sep=", ")
-	print("Dense", *dense, sep=", ")
-	print("Split", *split, sep=", ")
+	for index, model_perc in enumerate(percents):
+		percents[index] = ["{0:.4f}".format(model_perc[i] / total) for i in range(3)]
+		print(names[index], *percents[index], sep=", ")	
 
 def verify_removed_weights():
 	if test_behavior: 
@@ -202,7 +149,6 @@ def verify_removed_weights():
 		# that data is at first and third index
 		data = [processed_data[1], processed_data[3]]
 		name = ["weights", "biases"]
-
 		# check if any of the weights_to_test are in there
 		count = 0
 		for i, dataset in enumerate(data):
@@ -218,8 +164,49 @@ def verify_removed_weights():
 	else:
 		print("No need to test important weights. Make sure this is intentional.")
 
+# Once unedited data, and modified weight data has been collected, this function can be run to show difference in plots
+def show_differences():
+	modded_dists = make_distributions(process_files(), "weights", normalized=True)
+	files = [ws_save_loc, w_save_loc, bs_save_loc, b_save_loc]
+	files = [i.replace(modded, "") for i in files]
+	unmodded_dists = make_distributions(process_files(files), "weights", normalized=True)
+	
+	# each distribution is a list of dicts[split, dense, partial, d-p, d-s, p-s]
+	# calculate difference with modded being subtracted from the normal data
+	difference_dists = []
+	for i in range(6):
+		diff = {key:unmodded_dists[i][key] - modded_dists[i][key] for key in unmodded_dists[i].keys()}
+		difference_dists.append(diff)
+
+	draw_graph(difference_dists, "Difference of Normal Data and Weight-Removed Data", save_location="diagrams/difference.pdf")	
+
+# collect information on the heaviest weights that were removed
+def heavy_weight_info():
+	f = open(text_gene_groups, "r")
+	info = [] # tuple (index, gene group name, number of genes in group)
+	for index, line in enumerate(f):
+		if index in weights_to_test:
+			line = line.split()
+			info.append((index, line[0], len(line[2:])))
+	for i in info:
+		print(i)
+
+def gene_groups_info():
+	f = open(text_gene_groups, "r")
+	info = []
+	for line in f:
+		info.append(len(line.split()[2:]))
+	counts = {i:info.count(i) for i in set(info)}
+	x = list(counts.keys())
+	x.sort()
+	for i in list(x):
+		print(i, counts[i])
+
 if __name__ == "__main__":
-	draw_graphs(which="weights")
+	#draw_graphs(which="both")
 	#closeness()
 	#verify_removed_weights()
 	#print_percentages()
+	#show_differences()
+	heavy_weight_info()
+	#gene_groups_info()

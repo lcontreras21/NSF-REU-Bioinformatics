@@ -2,7 +2,7 @@ import torch
 import torch.optim as optim
 import pickle
 import numpy as np
-from nn_partial_links import * 
+#from nn_partial_links import * 
 '''
 # find missing genes
 f = open("text_files/missing_genes.txt", "r")
@@ -85,3 +85,15 @@ print(count)
 print(missing_genes)
 #k.close()
 '''
+
+import threading, time
+class my_thread(threading.Thread):
+	
+	def run(self):
+		
+th1 = my_thread(name="1")
+th2 = my_thread(name="2")
+th1.start()
+th2.start()
+th1.join()
+th2.join()

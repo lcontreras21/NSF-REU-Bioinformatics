@@ -133,7 +133,7 @@ def network_graph(model):
 		alpha=0.25)
 	'''
 	print("Saving to file","diagrams/" + model + ".pdf", flush=True)
-	plt.savefig("diagrams/" + model + ".pdf")
+	plt.savefig("diagrams/graphs/" + model + ".pdf")
 	plt.close(model)
 	print("Done", flush=True)
 	print("Time to draw model:", timedelta(seconds=time.monotonic() - time_model), flush=True)

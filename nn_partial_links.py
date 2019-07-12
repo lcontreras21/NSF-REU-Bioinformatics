@@ -89,9 +89,9 @@ def get_gene_indicies(gene_group, gene_indexer):
 	indices.sort()
 	return indices
 
-def make_mask(training_data, gene_groups):
+def make_mask(gene_groups):
 	gene_indexer = gene_dict()
-	mask = np.array([[0] * len(training_data[0][0])] * len(gene_groups))
+	mask = np.array([[0] * input_size] * len(gene_groups))
 	for group_index, gene_group in enumerate(gene_groups):
 		if test_behavior and group_index in weights_to_test:
 			group_indices = []
@@ -157,7 +157,7 @@ def train_partial_model():
 
 	if debug:
 		print("Doing some calculations")
-	mask = make_mask(training_data, gene_groups)
+	mask = make_mask(gene_groups)
 
 	# set the starting weights to model the biology
 	if debug:

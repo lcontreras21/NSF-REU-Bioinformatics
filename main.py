@@ -12,7 +12,6 @@ from datetime import timedelta
 
 def analyze(n):
 	status = {True: "on", False: "off"}
-	
 	print("Before starting data collection, are these settings correct?")
 	print("Debug is", status[debug], 
 		"\b, Data recording is", status[record_data], 
@@ -29,7 +28,6 @@ def analyze(n):
 		return
 	
 	start_time = time.monotonic()
-		
 	# Testing and training models, Data Collection loop
 	print("|Settings| Debugging is", status[debug],
 			"\b, Data recording is", status[record_data],
@@ -52,15 +50,16 @@ def analyze(n):
 	print("\033[F-----Finished", n, "tests in", timedelta(seconds=loop_time - start_time))
 
 	# Analysis Portion
-	print("\nChecking if weights were properly removed")
-	verify_removed_weights()
+	if test_behavior:
+		print("\nChecking if weights were properly removed")
+		verify_removed_weights()
 	
 	print("\nPercentages from session")
 	print_percentages()
 
 	print("\nDrawing distributions and saving to files under /diagrams/")
 	draw_graphs(which="both")
-	
+
 	end_time = time.monotonic()
 	print("\n-----Finished experiment in", timedelta(seconds=end_time - start_time))
 	
