@@ -86,14 +86,3 @@ print(missing_genes)
 #k.close()
 '''
 
-import threading, time
-class my_thread(threading.Thread):
-	
-	def run(self):
-		
-th1 = my_thread(name="1")
-th2 = my_thread(name="2")
-th1.start()
-th2.start()
-th1.join()
-th2.join()

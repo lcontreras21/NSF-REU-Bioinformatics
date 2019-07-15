@@ -27,18 +27,18 @@ def normalize(d):
 def make_distributions(data, data_type, normalized=False):
 	# normalized can be True, False, or "both"
 	# data = [w_s, w, b_s, b]
-	# dists = [split, dense, partial, d-p, d-s, p-s]	
-	key = {"split": 0, "dense": 1, "partial": 2, 
-			"dense-partial": 3, "dense-split": 4, "partial-split": 5}
+	# dists = [split, dense, zerow, d-p, d-s, p-s]	
+	key = {"split": 0, "dense": 1, "zerow": 2, 
+			"dense-zerow": 3, "dense-split": 4, "zerow-split": 5}
 	dists = [{i:0 for i in range(hidden_size)} for i in range(6)]
 	if data_type == "weights":
 		x = data[0] + data[1]
 	elif data_type == "biases":
 		x = data[2] + data[3]
 	for data_sample in x:
-		name, vals = key[data_sample[0]], data_sample[1]
-		for i in vals:
-			dists[name][i] += 1
+		name, weights = key[data_sample[0]], data_sample[1]
+		for weight in weights:
+			dists[name][weight] += 1
 	if normalized == "both":
 		dists_norm =[normalize(dists[i]) for i in range(6)]
 		return dists, dists_norm
@@ -48,9 +48,9 @@ def make_distributions(data, data_type, normalized=False):
 		
 	return dists
 
-# Three types of data: dense, split, partial
+# Three types of data: dense, split, zero-weights
 def draw_graph(dists, title, save_location="diagrams/distribution.pdf"):
-	# dists = [split, dense, partial, d-p, d-s, p-s]i
+	# dists = [split, dense, zerow, d-p, d-s, p-s]i
 	names = ["Split Model", "Dense Model", "Zero-weights Model", 
 			"Dense-Zero Overlap", "Dense-Split Overlap", "Zero-Split Overlap"]
 	colors = ["r", "g", "b", "tab:grey", "tab:brown", "tab:purple"]
@@ -58,7 +58,7 @@ def draw_graph(dists, title, save_location="diagrams/distribution.pdf"):
 	fig, axs = plt.subplots(3, 2, sharey=True) #,sharex=True, sharey=True)
 	axs = axs.tolist()
 	axs_list = [i for j in axs for i in j]
-	fig.suptitle("Distribution of " + title + " " + modded.capitalize())
+	fig.suptitle("Distribution of " + title + " " + modded[1:].capitalize())
 	fig.subplots_adjust(hspace=0.5)
 	plt.rcParams['xtick.labelsize'] = 4
 
@@ -73,11 +73,11 @@ def draw_graphs(which="both"):
 	# which can be one of {'both', 'weights', biases'}
 	processed_data = process_files()
 	key = {"weights":["weights"], "biases":["biases"], "both": ["weights", "biases"]}
-	configs = ["_unnormalized_dist_2", "normalized_dist_2"] 
-	for data in key[which]:
-		unnorm, norm = make_distributions(processed_data, i, normalized="both")
-		for config in configs:
-			draw_graph(unnorm,  "Top 5 " + data.capitalize(), save_location=image_path + data + config + modded + ".pdf")
+	for data_type in key[which]:
+		unnorm, norm = make_distributions(processed_data, data_type, normalized="both")
+		data_pair = [(unnorm, "_unnorm"), (norm, "_norm")]
+		for data, name in data_pair:
+			draw_graph(data, "Top 5 " + data_type.capitalize(), save_location=image_path + data_type + name + modded + ".pdf")
 
 def biggest_weights(n, pretty_print=False):
 	# Necessary stuff to be able to get info from any file
@@ -170,7 +170,7 @@ def show_differences():
 	files = [i.replace(modded, "") for i in files]
 	unmodded_dists = make_distributions(process_files(files), "weights", normalized=True)
 	
-	# each distribution is a list of dicts[split, dense, partial, d-p, d-s, p-s]
+	# each distribution is a list of dicts[split, dense, zerow, d-p, d-s, p-s]
 	# calculate difference with modded being subtracted from the normal data
 	difference_dists = []
 	for i in range(6):
@@ -202,10 +202,10 @@ def gene_groups_info():
 		print(i, counts[i])
 
 if __name__ == "__main__":
-	#draw_graphs(which="both")
+	draw_graphs(which="both")
 	#closeness()
 	#verify_removed_weights()
 	#print_percentages()
 	#show_differences()
-	heavy_weight_info()
+	#heavy_weight_info()
 	#gene_groups_info()

@@ -1,8 +1,8 @@
 ### instead of bash script, run files here
 
-from nn_partial_links import *
-from nn_dense import *
-from nn_split import *
+from models.nn_zerow import *
+from models.nn_dense import *
+from models.nn_split import *
 from test_models import *
 from collect_weights import *
 from analyze import *

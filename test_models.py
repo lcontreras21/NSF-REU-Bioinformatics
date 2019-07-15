@@ -12,9 +12,9 @@ import random
 from datetime import timedelta
 from tqdm import tqdm
 
-from nn_partial_links import add_to_data, make_gene_vector, make_target, label_to_ix, NN
-from nn_split import NN_split
-from nn_dense import NN_dense
+from models.nn_zerow import add_to_data, make_gene_vector, make_target, label_to_ix, NN
+from models.nn_split import NN_split
+from models.nn_dense import NN_dense
 from settings import *
 
 def test_model(model, testing_data):

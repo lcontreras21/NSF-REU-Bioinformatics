@@ -14,7 +14,7 @@ def process():
 	name_list = ["Dense", "Zero-weights", "Split"]
 	dicts = [torch.load(stored_dict_locs[model_name]) for model_name in name_list]
 
-	# weight_data = [dense, partial, split]
+	# weight_data = [dense, zerow, split]
 	weight_data = [dicts[0]["fc1.weight"], dicts[1]["fc1.weight"], []]
 	# adding data from split model
 	weight_data[2] = [dicts[2][layer] for layer in dicts[2] if "weight" in layer]
@@ -32,12 +32,12 @@ def process():
 	return weights, biases
 
 def five_lines(data, names, function):
-	special_nums = []
-	for i in range(len(data)):
+	special_nums = [] # contains tuples of name and weights
+	for i in range(len(data)): # data is three model weights
 		ws = data[i].tolist()
 		max_indices = []
 		ws_copy = deepcopy(ws)
-		for ii in range(5):
+		for ii in range(5): # find the top five weights
 			special_val = function(ws_copy)
 			ws_copy.remove(special_val)
 			max_indices.append(ws.index(special_val))
@@ -63,7 +63,7 @@ def write_data(ffile, data):
 	f.close()
 
 def collect_weights():
-	name_list = ["dense", "partial", "split"]
+	name_list = ["dense", "zerow", "split"]
 	weights, biases = process()
 
 	if debug:
