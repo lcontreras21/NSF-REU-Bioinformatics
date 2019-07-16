@@ -5,7 +5,7 @@
 
 data = "subset"
 mode = "train"
-debug, record_data, test_behavior = True, False, True 
+debug, record_data, test_behavior = True, False, False 
 if test_behavior:
 	weights_to_test = [26, 27, 19, 34, 25, 3, 8, 13]
 else:

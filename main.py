@@ -36,7 +36,7 @@ def analyze(n):
 	for i in range(int(n)):
 		print("Currently on iteration", "{:03}".format(i+1), end="\r")
 		# Trains the models
-		train_partial_model()
+		train_zerow_model()
 		train_dense_model()
 		train_split_model()
 
@@ -65,5 +65,5 @@ def analyze(n):
 	
 
 if __name__ == "__main__":
-	analyze(sys.argv[1])
-
+	#analyze(sys.argv[1])
+	train_split_model()
