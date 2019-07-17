@@ -10,24 +10,7 @@ from operator import itemgetter
 class NN_split(nn.Module):
 	def __init__(self, hidden_size, output_size):
 		super(NN_split, self).__init__()
-		self.gene_group_indicies = []
-		fc = []  
-		gene_indexes = gene_dict()
-		gene_groups = import_gene_groups()
-		for i, gene_group in enumerate(gene_groups):
-			if test_behavior and i in weights_to_test:
-				fc.append(nn.Linear(1,1))
-				fc[-1].weight = nn.Parameter(torch.FloatTensor([0]), requires_grad=False)
-				fc[-1].bias = nn.Parameter(torch.FloatTensor([0]), requires_grad=False)
-				self.gene_group_indicies.append([])
-			else:
-				group_indices = get_gene_indicies(gene_group, gene_indexes)
-				self.gene_group_indicies.append(group_indices)
-				# creates linear layers that has input
-				# of gene group size and outputs a 
-				# tensor of size 1
-				fc.append(nn.Linear(len(group_indices), 1))
-		self.linears = nn.ModuleList(fc)
+		self.linears = nn.ModuleList(self.make_linears())
 		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(hidden_size - len(weights_to_test), 2)
 
@@ -45,6 +28,23 @@ class NN_split(nn.Module):
 		# concatenate all the linear layers to make a tensor with size of gene groups
 		hidden = torch.stack(hidden, 1)
 		return hidden
+	
+	def make_linears(self):
+		self.gene_group_indicies = []
+		fc = []  
+		gene_indexes = gene_dict()
+		gene_groups = import_gene_groups()
+		for i, gene_group in enumerate(gene_groups):
+			if test_behavior and i in weights_to_test:
+				fc.append(nn.Linear(1,1))
+				fc[-1].weight = nn.Parameter(torch.FloatTensor([0]), requires_grad=False)
+				fc[-1].bias = nn.Parameter(torch.FloatTensor([0]), requires_grad=False)
+				self.gene_group_indicies.append([])
+			else:
+				group_indices = get_gene_indicies(gene_group, gene_indexes)
+				fc.append(nn.Linear(len(group_indices), 1))
+				self.gene_group_indicies.append(group_indices)
+		return fc
 
 	def split_data(self, input_vector):
 		data = input_vector.tolist()[0]

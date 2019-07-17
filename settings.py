@@ -5,7 +5,7 @@
 
 data = "subset"
 mode = "train"
-debug, record_data, test_behavior = True, False, False 
+debug, record_data, test_behavior = False, True, True 
 if test_behavior:
 	weights_to_test = [26, 27, 19, 34, 25, 3, 8, 13]
 else:
@@ -43,8 +43,8 @@ text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 stored_dict_locs = {name:"state_dicts/nn_" + name + ".pt" for name in ["Split", "Dense", "Zero-weights"]}
 
 # where to save run percentages if enabled
-text_path = "text_files/analysis/mod2/"
-image_path = "diagrams/mod2/"
+text_path = "text_files/analysis/mod3/"
+image_path = "diagrams/mod3/"
 modded = ""
 replace = "_modded"
 if test_behavior:

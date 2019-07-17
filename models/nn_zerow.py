@@ -12,21 +12,22 @@ class NN_zerow(nn.Module):
 		self.fc1 = nn.Linear(input_size, hidden_size)
 		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(hidden_size, output_size)
+		
+		self.make_mask()
+		self.set_weights()
 	
 	def forward(self, input_vector):
 		out = self.fc1(input_vector)
 		out = self.relu(out)
 		out = self.fc2(out)
 		out = F.log_softmax(out, dim=1)
+
+		self.set_bias()
+		self.set_weights()
 		return out
 
-	def set_weights(self):
-		self.fc1.weight.data *= self.mask
-
-	def __str__(self):
-		return "Zero-weights"
-	
-	def make_mask(self, gene_groups):
+	def make_mask(self):
+		gene_groups = import_gene_groups()
 		gene_indexer = gene_dict()
 		mask = np.array([[0] * input_size] * len(gene_groups))
 		for i, gene_group in enumerate(gene_groups):
@@ -34,10 +35,20 @@ class NN_zerow(nn.Module):
 				group_indices = []
 			else:
 				group_indices = get_gene_indicies(gene_group, gene_indexer)
-			mask[group_index][group_indices] = 1
+			mask[i][group_indices] = 1
 		mask = torch.FloatTensor(mask)
 		self.mask = mask
-	
+
+	def set_weights(self):
+		self.fc1.weight.data *= self.mask
+
+	def set_bias(self):
+		mask = np.array([1] * hidden_size)
+		mask[weights_to_test] = 0
+		self.fc1.bias.data *= torch.FloatTensor(mask)
+
+	def __str__(self):
+		return "Zero-weights"
 
 def train_zerow_model():
 	train_model(NN_zerow(input_size, hidden_size, output_size))

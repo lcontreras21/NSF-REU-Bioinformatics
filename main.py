@@ -34,14 +34,21 @@ def analyze(n):
 			"\b, Testing weight environment is", status[test_behavior])
 	print("\nStarting Data Collection")
 	for i in range(int(n)):
-		print("Currently on iteration", "{:03}".format(i+1), end="\r")
 		# Trains the models
+		status = "Currently on iteration " + "{:03}".format(i+1) + ", working on:"
+		
+		print(status, "Zerow", end="\r")
 		train_zerow_model()
+
+		print(status, "Dense", end="\r")
 		train_dense_model()
+
+		print(status, "Split", end="\r")
 		train_split_model()
 
 		# Records the weights and saves to file
-		collect_weights()
+		if record_data:
+			collect_weights()
 
 		# Tests the models and saves percentages to file
 		test_models()
@@ -57,7 +64,7 @@ def analyze(n):
 	print("\nPercentages from session")
 	print_percentages()
 
-	print("\nDrawing distributions and saving to files under /diagrams/")
+	print("\nDrawing distributions and saving to files under", image_path)
 	draw_graphs(which="both")
 
 	end_time = time.monotonic()
@@ -66,4 +73,4 @@ def analyze(n):
 
 if __name__ == "__main__":
 	#analyze(sys.argv[1])
-	train_split_model()
+	print_percentages()

@@ -1,5 +1,4 @@
-### Place to store helper functions that load and process the
-### text data.
+### Place to store helper functions that load and process the text data
 import torch
 import torch.nn as nn 
 import torch.nn.functional as F
@@ -14,71 +13,63 @@ import pickle
 from tqdm import tqdm
 import numpy as np
 from copy import deepcopy
+from collections import defaultdict
 
 # adds data to a list for training or testing. Could add an
 # even amount or uneven amount based on inputs.
 def add_to_data(data_set, tumor_max, normal_max):
-	normal_data = open(text_file_normal, "r")
-	tumor_data = open(text_file_tumor, "r")
+	normals = 0	
+	with open(text_file_normal, "r") as normal_data:
+		while normals < normal_max:
+			line = normal_data.readline().split()
+			data_set += [(line[1:-1], line[-1])]
+			normals += 1
+
 	tumors = 0
-	normals = 0
-	while tumors < tumor_max:
-		next_line = tumor_data.readline().split()
-		data_set += [(next_line[1:-1], next_line[-1])]
-		tumors += 1
-	while normals < normal_max:
-		next_line = normal_data.readline().split()
-		data_set += [(next_line[1:-1], next_line[-1])]
-		normals += 1
-	normal_data.close()
-	tumor_data.close()
+	with open(text_file_tumor, "r") as tumor_data:
+		while tumors < tumor_max:
+			line = tumor_data.readline().split()
+			data_set += [(line[1:-1], line[-1])]
+			tumors += 1
+
 
 # to be used for determining output of NN,
 # essentially our sigmoid function but other option is possible
 label_to_ix = {"Tumor": 0, "Normal": 1}
-def make_target(label, label_to_ix):
+def make_expected(label, label_to_ix):
 	return torch.LongTensor([label_to_ix[label]])
 
 # transforms a the gene list into a tensor for our NN
-def make_gene_vector(file_line):
-	data = list(map(float, file_line))
-	vec = torch.FloatTensor(data)
+def make_gene_vector(input_sample):
+	processed = list(map(float, input_sample))
+	vec = torch.FloatTensor(processed)
 	return vec.view(1, -1)
 
 # makes a dictionary for gene index to be able to connect nodes
 def gene_dict():
-	f = open(text_data, "r")
-	gene_names = f.readline().split()
-	f.close()
+	with open(text_data, "r") as f:
+		gene_names = f.readline().split()
 
-	gene_to_index = {}
-	for index, gene_name in enumerate(gene_names[1:-1]):
-		if gene_name not in gene_to_index:
-			gene_to_index[gene_name] = [index]
-	else:
-		gene_to_index[gene_name] = gene_to_index[gene_name] +[index]
-	return gene_to_index
+	gene_to_index = defaultdict(list)
+	for index, key in enumerate(gene_names[1:-1]):
+		gene_to_index[key].append(index)
+	return dict(gene_to_index)
 
 # import hallmark gene data
 def import_gene_groups():
-	f = open(text_gene_groups, "r")
-	gene_groups = []
-	for line in f:
-		gene_data = line.split()
-		gene_groups.append(gene_data[2:])
-	f.close()
+	with open(text_gene_groups, "r") as f:
+		gene_groups = [line.split()[2:] for line in f]
 	return gene_groups
 
-def get_gene_indicies(gene_group, gene_indexer):
-	f = open("text_files/gene_pairs.pickle", "rb")
-	alternate_names = pickle.load(f)
-	f.close()
+def get_gene_indicies(gene_group, gene_indexes):
+	with open("text_files/gene_pairs.pickle", "rb") as f:
+		alternate_names = pickle.load(f)
 	indices = []
 	for gene in gene_group:
 		try:
 			if gene in alternate_names.keys():
 				gene = alternate_names[gene]
-			indices += gene_indexer[gene]
+			indices += gene_indexes[gene]
 		except:
 			pass
 	indices.sort()
@@ -116,12 +107,6 @@ def train_model(model):
 	if debug:
 		print("Loaded the data ", flush=True)
 
-	if str(model) == "Zero-weights":
-		if debug:
-			print("Doing some calculations")
-		model.make_mask(gene_groups)
-		model.set_weights()
-
 	# train the model
 	if debug:
 		print("Training the model")
@@ -133,15 +118,14 @@ def train_model(model):
 			model.zero_grad()
 
 			gene_vec = make_gene_vector(instance)
-			target = make_target(label, label_to_ix)
+			expected = make_expected(label, label_to_ix)
 			
 			# get probabilities from instance
 			output = model(gene_vec)
 
 			# apply learning to the model based on the instance
-			loss = loss_function(output, target)
+			loss = loss_function(output, expected)
 			loss.backward()
-			if str(model) == "Zero-weights": model.set_weights() 
 			optimizer.step()
 
 	if debug:

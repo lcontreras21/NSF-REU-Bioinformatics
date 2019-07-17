@@ -55,11 +55,17 @@ def draw_graph(dists, title, save_location="diagrams/distribution.pdf"):
 			"Dense-Zero Overlap", "Dense-Split Overlap", "Zero-Split Overlap"]
 	colors = ["r", "g", "b", "tab:grey", "tab:brown", "tab:purple"]
 	
-	fig, axs = plt.subplots(3, 2, sharey=True) #,sharex=True, sharey=True)
+	fig, axs = plt.subplots(3, 2, sharey=True)
 	axs = axs.tolist()
-	axs_list = [i for j in axs for i in j]
-	fig.suptitle("Distribution of " + title + " " + modded[1:].capitalize())
+	axs_list = [inner for outer in axs for inner in outer]
+	fig.suptitle("Distribution of " + title)
 	fig.subplots_adjust(hspace=0.5)
+	if test_behavior:
+		weights_to_test.sort()
+		text =  title.split()[-1] + " removed are " + ", ".join(map(str, weights_to_test))
+	else:
+		text = "No weights removed"
+	plt.figtext(0.5, 0.02, text, ha="center", va="bottom")
 	plt.rcParams['xtick.labelsize'] = 4
 
 	for index, ax in enumerate(axs_list):
@@ -123,37 +129,34 @@ def closeness():
 			"the same session\n", processed_dist[5][:5])
 
 def print_percentages():
-	f = open(percent_save_loc, "r")
 	# info with list of [sensitivity, specificity, correctness]
-	names = ["Zerow", "Dense", "Split"]
-	percents = [[0]*3, [0]*3, [0]*3] #zerow, dense, split
+	model_percents = {"Zero-weights": [0]*3, "Dense": [0]*3, "Split": [0]*3}
 	key = {"Zero-weights": 0, "Dense": 1, "Split": 2}
 	total = 0
-	for line in f:
-		total += 1
-		data = line.split()
-		name = key[data[0]]
-		data = list(map(float, data[1:]))
-		percents[name] = [percents[name][i] + data[i] for i in range(3)]
-	f.close()
+	with open(percent_save_loc, "r") as f:
+		for line in f:
+			total += 1
+			line = line.split()
+			run_name = line[0]
+			run_data = list(map(float, line[1:]))
+			model_percents[run_name] = [model_percents[run_name][i] + run_data[i] for i in range(3)]
 	total = total / 3
-	for index, model_perc in enumerate(percents):
-		percents[index] = ["{0:.4f}".format(model_perc[i] / total) for i in range(3)]
-		print(names[index], *percents[index], sep=", ")	
+	for model in model_percents:
+		model_percents[model] = ["{0:.4f}".format(model_percents[model][i] / total) for i in range(3)]
+		print(model, *model_percents[model], sep=", ")	
 
 def verify_removed_weights():
 	if test_behavior: 
 		processed_data = process_files()
 		# only interested in the main files, not overlap
 		# that data is at first and third index
-		data = [processed_data[1], processed_data[3]]
-		name = ["weights", "biases"]
+		datasets = [processed_data[1], processed_data[3]]
+		names = ["weights", "biases"]
 		# check if any of the weights_to_test are in there
 		count = 0
-		for i, dataset in enumerate(data):
-			for ii, line in enumerate(dataset):
-				model_name, big_weights = line
-				error = name[i] + " " + model_name + " " + str(ii) + "\n"
+		for i, dataset in enumerate(datasets):
+			for ii, (model_name, big_weights) in enumerate(dataset):
+				error = names[i] + " " + model_name + " " + str(ii) + "\n"
 				mistakes = [weight for weight in weights_to_test if weight in big_weights and model_name != "dense"]
 				if len(mistakes) != 0:	
 					print(error.join([str(x) for x in mistakes]))
@@ -177,10 +180,10 @@ def show_differences():
 		diff = {key:unmodded_dists[i][key] - modded_dists[i][key] for key in unmodded_dists[i].keys()}
 		difference_dists.append(diff)
 
-	draw_graph(difference_dists, "Difference of Normal Data and Weight-Removed Data", save_location="diagrams/difference.pdf")	
+	draw_graph(difference_dists, "Difference of Normal Data and Weight-Removed Data", save_location=image_path)	
 
 # collect information on the heaviest weights that were removed
-def heavy_weight_info():
+def weight_info():
 	f = open(text_gene_groups, "r")
 	info = [] # tuple (index, gene group name, number of genes in group)
 	for index, line in enumerate(f):
@@ -202,10 +205,10 @@ def gene_groups_info():
 		print(i, counts[i])
 
 if __name__ == "__main__":
-	draw_graphs(which="both")
+	#draw_graphs(which="both")
 	#closeness()
 	#verify_removed_weights()
 	#print_percentages()
 	#show_differences()
-	#heavy_weight_info()
-	#gene_groups_info()
+	#weight_info()
+	print()

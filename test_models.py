@@ -24,24 +24,24 @@ def test_model(model, testing_data):
 	with torch.no_grad():
 		#vals = [true_pos, total_pos, true_neg, total_neg, correct, total] 
 		vals = [0] * 6
-		testing_size = normal_data_size + tumor_data_size 
+		testing_size = len(testing_data)
 		for i in tqdm(range(testing_size), disable=not debug):
 			instance, label = testing_data[i]
 			
 			gene_vec = make_gene_vector(instance)
-			target = make_target(label, label_to_ix)
+			expected = make_expected(label, label_to_ix)
 			outputs = model(gene_vec)
 			_, predicted = torch.max(outputs.data, 1)
-			vals[5] += target.size(0)
-			vals[4] += (predicted == target).item()
+			vals[5] += expected.size(0)
+			vals[4] += (predicted == expected).item()
 			
-			if target.item() == 1:  # getting normal is considered True, tumor is False
+			if expected.item() == 1:  # getting normal is considered True, tumor is False
 				vals[1] += 1
-				if torch.equal(predicted, target):
+				if torch.equal(predicted, expected):
 					vals[0] += 1  # true positive if predicted == actual
-			elif target.item() == 0:
+			elif expected.item() == 0:
 				vals[3] += 1
-				if torch.equal(predicted, target):
+				if torch.equal(predicted, expected):
 					vals[2] += 1  # true negative if predicted == actual
 			
 	# account for specificity and sensitivity here
@@ -71,8 +71,8 @@ def test_models():
 	testing_data = []
 	add_to_data(testing_data, tumor_data_size, normal_data_size)
 	random.shuffle(testing_data)
-	
-	models = [NN(input_size, hidden_size, output_size), 
+
+	models = [NN_zerow(input_size, hidden_size, output_size), 
 			NN_dense(input_size, hidden_size, output_size), 
 			NN_split(hidden_size, output_size)]
 	
