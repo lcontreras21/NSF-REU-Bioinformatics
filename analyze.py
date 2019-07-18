@@ -21,6 +21,8 @@ def process_files(files=[ws_save_loc, w_save_loc, bs_save_loc, b_save_loc]):
 
 def normalize(d):
 	total = sum(d.values())
+	if total == 0: 
+		total = 1
 	d = {i:(d[i]/total) for i in d}
 	return d
 
@@ -141,9 +143,10 @@ def print_percentages():
 			run_data = list(map(float, line[1:]))
 			model_percents[run_name] = [model_percents[run_name][i] + run_data[i] for i in range(3)]
 	total = total / 3
+	print("Sensitivity", "Specificity", "Correctness", sep="\t")
 	for model in model_percents:
 		model_percents[model] = ["{0:.4f}".format(model_percents[model][i] / total) for i in range(3)]
-		print(model, *model_percents[model], sep=", ")	
+		print("{0: <14}".format(str(model)), *model_percents[model], sep="\t")	
 
 def verify_removed_weights():
 	if test_behavior: 
@@ -208,7 +211,7 @@ if __name__ == "__main__":
 	#draw_graphs(which="both")
 	#closeness()
 	#verify_removed_weights()
-	#print_percentages()
+	print_percentages()
 	#show_differences()
 	#weight_info()
-	print()
+	#print()

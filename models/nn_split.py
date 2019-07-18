@@ -8,11 +8,13 @@ from settings import *
 from operator import itemgetter
 
 class NN_split(nn.Module):
-	def __init__(self, hidden_size, output_size):
+	def __init__(self):
 		super(NN_split, self).__init__()
 		self.linears = nn.ModuleList(self.make_linears())
 		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(hidden_size - len(weights_to_test), 2)
+
+		self.load_starting_seed()
 
 	def forward(self, input_vector):
 		out = self.fc1(input_vector) #custom fc1 compared to other models
@@ -57,11 +59,18 @@ class NN_split(nn.Module):
 			split.append(torch.FloatTensor(trimmed_data))
 		return split
 
+	def load_starting_seed(self):
+		seed = get_starting_seed()
+		split_seed = [i.unsqueeze(0) for i in self.split_data(seed)]
+		for i, layer in enumerate(self.linears):
+			self.linears[i].weight.data = split_seed[i]
+
+
 	def __str__(self):
 		return "Split"
 
 def train_split_model():
-	train_model(NN_split(hidden_size, output_size))
+	train_model(NN_split())
 
 if __name__ == "__main__":
 	train_split_model()

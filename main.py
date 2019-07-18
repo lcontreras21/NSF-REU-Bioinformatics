@@ -3,6 +3,7 @@
 from models.nn_zerow import *
 from models.nn_dense import *
 from models.nn_split import *
+from models.process_data import set_starting_seed
 from test_models import *
 from collect_weights import *
 from analyze import *
@@ -31,7 +32,10 @@ def analyze(n):
 	# Testing and training models, Data Collection loop
 	print("|Settings| Debugging is", status[debug],
 			"\b, Data recording is", status[record_data],
-			"\b, Testing weight environment is", status[test_behavior])
+			"\b, Testing weight environment is", status[test_behavior],
+			"\b, Loading starting seed is", status[seed])
+	
+	set_starting_seed()	
 	print("\nStarting Data Collection")
 	for i in range(int(n)):
 		# Trains the models
@@ -72,5 +76,5 @@ def analyze(n):
 	
 
 if __name__ == "__main__":
-	#analyze(sys.argv[1])
-	print_percentages()
+	analyze(sys.argv[1])
+	#collect_weights()

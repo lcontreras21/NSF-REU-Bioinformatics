@@ -4,11 +4,13 @@ from settings import *
 from models.process_data import *
 
 class NN_dense(nn.Module):
-	def __init__(self, gene_size, hidden_size, num_labels):
+	def __init__(self):
 		super(NN_dense, self).__init__()
-		self.fc1 = nn.Linear(gene_size, hidden_size)
+		self.fc1 = nn.Linear(input_size, hidden_size)
 		self.relu = nn.ReLU()
-		self.fc2 = nn.Linear(hidden_size, num_labels)
+		self.fc2 = nn.Linear(hidden_size, output_size)
+		
+		self.load_starting_seed()
 		self.mask()
 
 	def forward(self, input_vector):
@@ -19,8 +21,12 @@ class NN_dense(nn.Module):
 		
 		self.mask()
 		return out
+	
 	def __str__(self):
 		return "Dense"
+	
+	def load_starting_seed(self):
+		self.fc1.weight.data = get_starting_seed()
 
 	def mask(self):
 		# bias mask
@@ -34,7 +40,7 @@ class NN_dense(nn.Module):
 		self.fc1.weight.data *= torch.FloatTensor(mask)
 
 def train_dense_model():
-	train_model(NN_dense(input_size, hidden_size, output_size))
+	train_model(NN_dense())
 
 if __name__ == "__main__":
 	train_dense_model()

@@ -16,18 +16,17 @@ It is necessary to install various items before the files can be run. These incl
 - For all files: datetime, time, random, collections, copy
 
 ## Contents
-- Three models: a fully connected (dense) model; a partially connected (zero-weights) model; a sparsely connected (split) model
-- A gene scraper file to find alternate names for genes in a given gene group database. It will make a normal google search for the gene and more often, the first result is the correct gene name. It saves this and uses the information in other files.
-- A settings file where various parameters can be configured. This is also where files, such as the weights/biases, percentages, training and testing data, are loaded and saved. It can also be declared if the full or subset dataset is being used, if debugging needs to be turned on, if certain weights need to be tested.
+- Three models: a fully connected (dense) model; a partially connected (zero-weights) model; a sparsely connected (split) model. Each model uses function stored in the process\_data file. To train individual models, they must be ran from the main.py file, otherwise erros from import issues will come up. 
+- A settings file where various parameters can be configured. This is also where file locations for weights/biases, percentages, training and testing data, are loaded and/or saved. It can also be declared if the full or subset dataset is being used, if debugging needs to be turned on, or if certain weights need to be tested.
 - A test\_models file where each model's weight data is loaded and then and then used to test it. The sensitivity, specificity, and correctness of the model is then saved to a text file specified in the settings file.
+- A collect\_weights file that is used after the training process is done to collect the top n weights and biases for each model. Currently, only collecting the top 5 biggest weights. The data is stored in a text file and later used for analysis and statistics. 
 - An analyze file where various analysis tools are stored. Here, the data stored in a text file from several runs is read, and then distributions of that data can be made to see how weight importance is distributed. Those distributions can then be plotted. If weights have been removed for testing, the difference in performance can be calculated and shown here. The average sensitivity, specificity, and correctness can also be calculated here. 
 - Finally, a main file where everything is brought into one seamless process. After specifiying settings, file locations, and save locations in the settings file, this file can be run with a command line argument of how many times it needs to train, test, and collect data. At the end, it will output the percentages of the runs, draw the distribution data, and, if weights were being tested, check that none of the data has those weights. 
 	- After two sessions have been run, one where all weights were present and another where some weights were removed, the difference can be calculated and shown in the analyze file as mentioned above. 
+- A gene scraper file to find alternate names for genes in a given gene group database. It will make a normal google search for the gene and more often, the first result is the correct gene name. It saves this and uses the information in other files.
 - A plot file to visualize the neural networks. This will allow us to see the nodes and connections of the network and how the graphs differs between models.
 - In the preprocessing folder, there is a file to make subset datasets based on the gene groups, make training and testing data from the full dataset and from the subset dataset just created. It can also make other necessary files such as files containing the names of the genes in the full and subset datasets necessary for processing the data when training. 
 - Various sub-directories containing text files of unaltered data, training data, testing data, processed data, and the saved training weights of the models. 
 
 ## Background
-Part of the [SRI International REU program](https://www.sri.com/careers/research-experience-undergraduates-program). The student, Luis Contreras-Orendain, is a rising junior at Haverford College. He will be working with Subarna Sinha. 
-
-
+Part of the [SRI International REU program](https://www.sri.com/careers/research-experience-undergraduates-program).  

@@ -5,7 +5,11 @@
 
 data = "subset"
 mode = "train"
-debug, record_data, test_behavior = False, True, True 
+debug = False
+record_data = True
+test_behavior = False
+seed = True
+
 if test_behavior:
 	weights_to_test = [26, 27, 19, 34, 25, 3, 8, 13]
 else:
@@ -43,14 +47,15 @@ text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 stored_dict_locs = {name:"state_dicts/nn_" + name + ".pt" for name in ["Split", "Dense", "Zero-weights"]}
 
 # where to save run percentages if enabled
-text_path = "text_files/analysis/mod3/"
-image_path = "diagrams/mod3/"
+text_path = "text_files/analysis/fixed_seed/"
+image_path = "diagrams/fixed_seed/"
 modded = ""
 replace = "_modded"
 if test_behavior:
 	modded = replace
 
 percent_save_loc = text_path + "percentages" + modded + ".txt"
+all_weight_data_loc = text_path + "all_weights.txt"
 
 # where to save weights and biases if enabled
 bs_save_loc = text_path + "biases_similar" + modded + ".txt"
@@ -59,4 +64,7 @@ b_save_loc = text_path + "biases" + modded + ".txt"
 ws_save_loc = text_path + "weights_similar" + modded + ".txt"
 w_save_loc = text_path + "weights" + modded + ".txt"
 
+# other storage locations
+starting_seed_loc = "text_files/starting_seed.pickle"
+gene_pairs_loc = "text_files/gene_pairs.pickle"
 

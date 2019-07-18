@@ -62,7 +62,7 @@ def import_gene_groups():
 	return gene_groups
 
 def get_gene_indicies(gene_group, gene_indexes):
-	with open("text_files/gene_pairs.pickle", "rb") as f:
+	with open(gene_pairs_loc, "rb") as f:
 		alternate_names = pickle.load(f)
 	indices = []
 	for gene in gene_group:
@@ -75,6 +75,16 @@ def get_gene_indicies(gene_group, gene_indexes):
 	indices.sort()
 	return indices
 
+def set_starting_seed():
+	test_layer = nn.Linear(input_size, hidden_size)
+	test_layer.weight.data.normal_(0.0, 1/(input_size**(0.5)))
+	with open(starting_seed_loc, "wb") as f:
+		pickle.dump(test_layer.weight.data, f) 
+
+def get_starting_seed():
+	with open(starting_seed_loc, "rb") as f:
+		starting_seed = pickle.load(f)
+	return starting_seed
 
 def train_model(model):
 	start_time = time.monotonic()

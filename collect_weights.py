@@ -31,21 +31,22 @@ def process():
 
 	return weights, biases
 
-def five_lines(data, names, function):
+def specialized_data(datasets, n):
+	names = ["dense", "zerow", "split"]
 	special_nums = [] # contains tuples of name and weights
-	for i in range(len(data)): # data is three model weights
-		ws = data[i].tolist()
+	for i, dataset in enumerate(datasets): # data is three model weights
+		dataset = dataset.tolist()
 		max_indices = []
-		ws_copy = deepcopy(ws)
-		for ii in range(5): # find the top five weights
-			special_val = function(ws_copy)
-			ws_copy.remove(special_val)
-			max_indices.append(ws.index(special_val))
+		dataset_copy = deepcopy(dataset)
+		for ii in range(n): # find the top five weights
+			special_val = max(dataset_copy)
+			dataset_copy.remove(special_val)
+			max_indices.append(dataset.index(special_val))
 		max_indices.sort()
 		if debug:
 			print("{:<8}".format(names[i]), max_indices)
 		special_nums.append((names[i], max_indices))
-		
+
 	combos = list(combinations(special_nums, 2))	
 	duplicates_to_write = []
 	for pair in combos:
@@ -56,29 +57,34 @@ def five_lines(data, names, function):
 		duplicates_to_write.append((name, intersect))
 	return duplicates_to_write, special_nums
 
-def write_data(ffile, data):
-	f = open(ffile, "a")
-	for name, values in data:
-		f.write(name +"\t" +"\t".join(list(map(str, values))) + "\n")
-	f.close()
+def write_data(file_loc, data):
+	with open(file_loc, "a") as f:
+		for name, values in data:
+			f.write(name +"\t" +"\t".join(list(map(str, values))) + "\n")
 
 def collect_weights():
-	name_list = ["dense", "zerow", "split"]
 	weights, biases = process()
 
 	if debug:
 		print("\nWeights")
-	data_to_write, special_nums = five_lines(weights, name_list, max)
+	duplis, special_nums = specialized_data(weights, 5)
 
-	write_data(ws_save_loc, data_to_write)
+	write_data(ws_save_loc, duplis)
 	write_data(w_save_loc, special_nums)
 
 	if debug:
 		print("\nBiases")
-	data_to_write, special_nums = five_lines(biases, name_list, max)
+	duplis, special_nums = specialized_data(biases, 5)
 
-	write_data(bs_save_loc, data_to_write)
+	write_data(bs_save_loc, duplis)
 	write_data(b_save_loc, special_nums)
+
+	names = ["dense", "zerow", "split"]
+	weight_nums = []
+	for weight in weights:
+		weight_nums.append([x.item() for x in weight])
+	paired_data = [(names[i], weight_nums[i]) for i in range(3)]
+	write_data(all_weight_data_loc, paired_data)
 
 if __name__ == "__main__":
 	collect_weights()

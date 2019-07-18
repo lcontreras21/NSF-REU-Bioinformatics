@@ -72,9 +72,7 @@ def test_models():
 	add_to_data(testing_data, tumor_data_size, normal_data_size)
 	random.shuffle(testing_data)
 
-	models = [NN_zerow(input_size, hidden_size, output_size), 
-			NN_dense(input_size, hidden_size, output_size), 
-			NN_split(hidden_size, output_size)]
+	models = [NN_zerow(), NN_dense(), NN_split()]
 	
 	for i, model in enumerate(models):
 		model.load_state_dict(torch.load(stored_dict_locs[str(model)]))

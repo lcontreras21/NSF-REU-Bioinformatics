@@ -7,12 +7,13 @@ from models.process_data import *
 from settings import *
 
 class NN_zerow(nn.Module):
-	def __init__(self, input_size, hidden_size, output_size):
+	def __init__(self):
 		super(NN_zerow, self).__init__()
 		self.fc1 = nn.Linear(input_size, hidden_size)
 		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(hidden_size, output_size)
 		
+		self.load_starting_seed()
 		self.make_mask()
 		self.set_weights()
 	
@@ -39,6 +40,9 @@ class NN_zerow(nn.Module):
 		mask = torch.FloatTensor(mask)
 		self.mask = mask
 
+	def load_starting_seed(self):
+		self.fc1.weight.data = get_starting_seed()
+
 	def set_weights(self):
 		self.fc1.weight.data *= self.mask
 
@@ -51,7 +55,7 @@ class NN_zerow(nn.Module):
 		return "Zero-weights"
 
 def train_zerow_model():
-	train_model(NN_zerow(input_size, hidden_size, output_size))
+	train_model(NN_zerow())
 
 if __name__ == "__main__":
 	train_zerow_model()
