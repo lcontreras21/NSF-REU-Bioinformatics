@@ -10,18 +10,18 @@ class NN_zerow(nn.Module):
 	def __init__(self):
 		super(NN_zerow, self).__init__()
 		self.fc1 = nn.Linear(input_size, hidden_size)
-		self.relu = nn.ReLU()
+		self.tanh = nn.Tanh()
 		self.fc2 = nn.Linear(hidden_size, output_size)
 		
 		self.load_starting_seed()
 		self.make_mask()
-		self.set_weights()
+		#self.set_weights()
 	
 	def forward(self, input_vector):
 		out = self.fc1(input_vector)
-		out = self.relu(out)
+		out = self.tanh(out)
 		out = self.fc2(out)
-		out = F.log_softmax(out, dim=1)
+		#out = F.log_softmax(out, dim=1)
 
 		self.set_bias()
 		self.set_weights()
@@ -54,8 +54,9 @@ class NN_zerow(nn.Module):
 	def __str__(self):
 		return "Zero-weights"
 
-def train_zerow_model():
-	train_model(NN_zerow())
+def train_zerow_model(training_data):
+	train_model(NN_zerow(), training_data)
 
 if __name__ == "__main__":
-	train_zerow_model()
+	training_data = load_training_data()
+	train_zerow_model(training_data)

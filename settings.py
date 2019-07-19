@@ -4,11 +4,11 @@
 # mode is train, changed to test in testing_models.py file
 
 data = "subset"
-mode = "train"
 debug = False
 record_data = True
 test_behavior = False
 seed = True
+testing_parameters = True
 
 if test_behavior:
 	weights_to_test = [26, 27, 19, 34, 25, 3, 8, 13]
@@ -17,27 +17,13 @@ else:
 
 
 # hyperparameters
-input_size, hidden_size, output_size = 35728, 50, 2
+input_size, hidden_size, output_size = 4579, 50, 2
 num_epochs = 1 
 learning_rate = 0.001
-tumor_data_size, normal_data_size = 7975, 584
 
 # text files to use for the data
 train_dir = "text_files/training_data/"
 test_dir = "text_files/testing_data/"
-sub_logged = "text_files/subset_logged_scaled_rnaseq.txt"
-logged = "text_files/logged_scaled_rnaseq.txt"
-
-if data == "subset" and mode == "train":
-	text_file_normal =  train_dir + "subset_train_normal_samples.txt"
-	text_file_tumor = train_dir + "subset_train_tumor_samples.txt"
-	text_data = sub_logged
-	input_size = 4579
-
-elif data == "full" and mode == "train":
-	text_file_normal = train_dir + "full_train_normal_samples.txt"
-	text_file_tumor = train_dir + "full_train_tumor_samples.txt"
-	text_data = logged
 
 # gene group data to use
 text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
@@ -47,8 +33,8 @@ text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 stored_dict_locs = {name:"state_dicts/nn_" + name + ".pt" for name in ["Split", "Dense", "Zero-weights"]}
 
 # where to save run percentages if enabled
-text_path = "text_files/analysis/fixed_seed/"
-image_path = "diagrams/fixed_seed/"
+text_path = "text_files/analysis/testing_parameters/"
+image_path = "diagrams/testing_parameters/"
 modded = ""
 replace = "_modded"
 if test_behavior:
@@ -67,4 +53,3 @@ w_save_loc = text_path + "weights" + modded + ".txt"
 # other storage locations
 starting_seed_loc = "text_files/starting_seed.pickle"
 gene_pairs_loc = "text_files/gene_pairs.pickle"
-

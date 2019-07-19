@@ -11,16 +11,16 @@ class NN_split(nn.Module):
 	def __init__(self):
 		super(NN_split, self).__init__()
 		self.linears = nn.ModuleList(self.make_linears())
-		self.relu = nn.ReLU()
+		self.tanh = nn.Tanh()
 		self.fc2 = nn.Linear(hidden_size - len(weights_to_test), 2)
 
 		self.load_starting_seed()
 
 	def forward(self, input_vector):
 		out = self.fc1(input_vector) #custom fc1 compared to other models
-		out = self.relu(out)
+		out = self.tanh(out)
 		out = self.fc2(out)
-		out = F.log_softmax(out, dim=1)
+		#out = F.log_softmax(out, dim=1)
 		return out
 
 	def fc1(self, input_vector):
@@ -69,8 +69,9 @@ class NN_split(nn.Module):
 	def __str__(self):
 		return "Split"
 
-def train_split_model():
-	train_model(NN_split())
+def train_split_model(training_data):
+	train_model(NN_split(), training_data)
 
 if __name__ == "__main__":
-	train_split_model()
+	training_data = load_training_data()
+	train_split_model(training_data)

@@ -17,21 +17,21 @@ from collections import defaultdict
 
 # adds data to a list for training or testing. Could add an
 # even amount or uneven amount based on inputs.
-def add_to_data(data_set, tumor_max, normal_max):
-	normals = 0	
-	with open(text_file_normal, "r") as normal_data:
-		while normals < normal_max:
-			line = normal_data.readline().split()
-			data_set += [(line[1:-1], line[-1])]
-			normals += 1
+def add_to_data(data_set, text_files):
+	for text_file in text_files:
+		with open(text_file, "r") as f:
+			for line in f:
+				line = line.split()
+				data_set += [(line[1:-1], line[-1])]
 
-	tumors = 0
-	with open(text_file_tumor, "r") as tumor_data:
-		while tumors < tumor_max:
-			line = tumor_data.readline().split()
-			data_set += [(line[1:-1], line[-1])]
-			tumors += 1
-
+def load_data(mode):
+	dirs = {"train": train_dir, "test": test_dir}
+	if debug: 
+		print("Loading", mode, "data")
+	data = []
+	text_files = [dirs[mode] + data + "_" + mode + "_" + i + "_samples.txt" for i in ["normal", "tumor"]]
+	add_to_data(data, text_files)
+	return data
 
 # to be used for determining output of NN,
 # essentially our sigmoid function but other option is possible
@@ -47,6 +47,7 @@ def make_gene_vector(input_sample):
 
 # makes a dictionary for gene index to be able to connect nodes
 def gene_dict():
+	text_data = "text_files/" + data + "_gene_names.txt"
 	with open(text_data, "r") as f:
 		gene_names = f.readline().split()
 
@@ -75,7 +76,7 @@ def get_gene_indicies(gene_group, gene_indexes):
 	indices.sort()
 	return indices
 
-def set_starting_seed():
+def set_starting_seed(hidden_size=hidden_size):
 	test_layer = nn.Linear(input_size, hidden_size)
 	test_layer.weight.data.normal_(0.0, 1/(input_size**(0.5)))
 	with open(starting_seed_loc, "wb") as f:
@@ -86,13 +87,8 @@ def get_starting_seed():
 		starting_seed = pickle.load(f)
 	return starting_seed
 
-def train_model(model):
+def train_model(model, training_data):
 	start_time = time.monotonic()
-
-	### Hyperparameters
-	gene_groups = import_gene_groups()
-	hidden_size = len(gene_groups)
-
 	# terminal message to track work
 	if debug:
 		print("Training", str(model), "model on the", 
@@ -105,17 +101,8 @@ def train_model(model):
 			learning_rate, "learning rate.")
 
 	model = model.train()
-	loss_function = nn.CrossEntropyLoss()
+	loss_function = nn.NLLLoss()
 	optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate)
-
-	if debug:
-		print("Loading the data", end='', flush=True)
-	training_data = []
-	add_to_data(training_data, tumor_data_size, normal_data_size)
-	sys.stdout.write("\r")
-	sys.stdout.flush()
-	if debug:
-		print("Loaded the data ", flush=True)
 
 	# train the model
 	if debug:

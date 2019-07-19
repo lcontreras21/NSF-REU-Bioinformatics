@@ -1,3 +1,5 @@
+import random
+
 # Make a subset dataset based on the gene groups
 # Save that alternative to /text_files/
 def make_subset_dataset():
@@ -63,53 +65,23 @@ def name_files():
 	y.close()
 	u.close()
 
-# Create training data from the full and subset datasets for 80-20
-def training_data()
-	datatype = ["full", "subset"]
-	ns = "_normal_samples.txt"
-	ts = "_tumor_samples.txt"
-	tf = "text_files/"
-	for name in datatype:
-		# making training data for full and subset to be used for 80 - 20
-		f = open(tf + name + ns, "r")
-		g = open(tf + name + ts, "r")
-
-		h = open(tf + name + "_train" + ns, "w")
-		i = open(tf + name + "_train" _ ts, "w")
-		j = open(tf + name + "_test" + ns, "w")
-		k = open(tf + name + "_test" + ts, "w")
-
-		index = 0
-		for x in range(7975): # train tumor set
-			line = g.readline()
-			i.write(line)
-			index +=1
-		print(index)
-		index = 0
-		for x in range(1994): # test tumor set
-			line = g.readline()
-			k.write(line)
-			index +=1
-		print(index)
-		index = 0
-		for x in range(584): # train normal set
-			line = f.readline()
-			h.write(line)
-			index +=1
-		print(index)
-		index = 0
-		for x in range(146): # test normal set
-			line = f.readline()
-			j.write(line)
-			index +=1
-		print(index)
-		index = 0
-		f.close()
-		g.close()
-		h.close()
-		i.close()
-		j.close()
-		k.close()
+def create_train_test_data(name):
+	files = {"_normal_samples.txt":(584, 146), "_tumor_samples.txt": (7975, 1994)}
+	for f in files:
+		training_size, testing_size = files[f]
+		all_samples = []
+		with open("text_files/" + name + f) as text_file:
+			for line in text_file:
+				all_samples.append(line)
+		random.shuffle(all_samples)
+		training = all_samples[:training_size]
+		testing = all_samples[-testing_size:]
+		
+		text_files = {"train": ("text_files/training_data/", training),"test": ("text_files/testing_data/", testing)}
+		for t in text_files:
+			with open(text_files[t][0] + name + text_file + f, "w") as datafile:
+				for line in text_files[t][1]:
+					datafile.write(line)
 
 def find_missing_genes():
 	gene_file = open("text_files/gene_pairs.pickle", "rb")
@@ -138,7 +110,7 @@ def find_missing_genes():
 	
 	for gene in y:
 		if x[gene] != "Check manually":
-		gene = x[gene]
+			gene = x[gene]
 	try:
 		dicti[gene]
 	except:

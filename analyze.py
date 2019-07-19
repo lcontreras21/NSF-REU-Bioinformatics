@@ -6,6 +6,7 @@ from settings import *
 from copy import deepcopy
 from collections import Counter
 import matplotlib.pyplot as plt
+import sys
 
 def process_files(files=[ws_save_loc, w_save_loc, bs_save_loc, b_save_loc]):
 	to_return = []
@@ -130,9 +131,9 @@ def closeness():
 	print("How many times the two models overlapped during",
 			"the same session\n", processed_dist[5][:5])
 
-def print_percentages():
+def print_percentages(names=["Zero-weights", "Dense", "Split"]):
 	# info with list of [sensitivity, specificity, correctness]
-	model_percents = {"Zero-weights": [0]*3, "Dense": [0]*3, "Split": [0]*3}
+	percents = {"Zero-weights": [0]*3, "Dense": [0]*3, "Split": [0]*3}
 	key = {"Zero-weights": 0, "Dense": 1, "Split": 2}
 	total = 0
 	with open(percent_save_loc, "r") as f:
@@ -141,12 +142,13 @@ def print_percentages():
 			line = line.split()
 			run_name = line[0]
 			run_data = list(map(float, line[1:]))
-			model_percents[run_name] = [model_percents[run_name][i] + run_data[i] for i in range(3)]
+			percents[run_name] = [percents[run_name][i] + run_data[i] for i in range(3)]
+
 	total = total / 3
-	print("Sensitivity", "Specificity", "Correctness", sep="\t")
-	for model in model_percents:
-		model_percents[model] = ["{0:.4f}".format(model_percents[model][i] / total) for i in range(3)]
-		print("{0: <14}".format(str(model)), *model_percents[model], sep="\t")	
+	print(" " * 11, "Sensitivity", "Specificity", "Correctness", sep="\t")
+	for model in names:
+		percents[model] = ["{0:.9f}".format(percents[model][i] / total) for i in range(3)]
+		print("{0: <14}".format(str(model)), *percents[model], sep="\t")	
 
 def verify_removed_weights():
 	if test_behavior: 
@@ -206,6 +208,11 @@ def gene_groups_info():
 	x.sort()
 	for i in list(x):
 		print(i, counts[i])
+
+def reset_files():
+	files = [ws_save_loc, w_save_loc, bs_save_loc, b_save_loc, percent_save_loc, all_weight_data_loc]
+	for f in files:
+		open(f, "w").close()
 
 if __name__ == "__main__":
 	#draw_graphs(which="both")
