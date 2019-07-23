@@ -8,10 +8,10 @@ debug = False
 record_data = True
 test_behavior = False
 seed = True
-testing_parameters = True
+testing_parameters = False
 
 if test_behavior:
-	weights_to_test = [26, 27, 19, 34, 25, 3, 8, 13]
+	weights_to_test = [26, 27, 19, 34, 25, 3, 8, 13, 41]
 else:
 	weights_to_test = []
 
@@ -42,6 +42,7 @@ if test_behavior:
 
 percent_save_loc = text_path + "percentages" + modded + ".txt"
 all_weight_data_loc = text_path + "all_weights.txt"
+all_gene_weights_loc = text_path + "all_gene_weights.pickle"
 
 # where to save weights and biases if enabled
 bs_save_loc = text_path + "biases_similar" + modded + ".txt"

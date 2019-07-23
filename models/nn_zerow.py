@@ -5,12 +5,14 @@ import torch.nn as nn
 from models.process_data import *
 # settings file that has what files to use and hyperparameters
 from settings import *
+from train_models import *
+import numpy as np
 
 class NN_zerow(nn.Module):
 	def __init__(self):
 		super(NN_zerow, self).__init__()
 		self.fc1 = nn.Linear(input_size, hidden_size)
-		self.tanh = nn.Tanh()
+		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(hidden_size, output_size)
 		
 		self.load_starting_seed()
@@ -19,9 +21,9 @@ class NN_zerow(nn.Module):
 	
 	def forward(self, input_vector):
 		out = self.fc1(input_vector)
-		out = self.tanh(out)
+		out = self.relu(out)
 		out = self.fc2(out)
-		#out = F.log_softmax(out, dim=1)
+		out = F.log_softmax(out, dim=1)
 
 		self.set_bias()
 		self.set_weights()

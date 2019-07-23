@@ -4,23 +4,25 @@
 '''
 import torch.nn as nn
 from models.process_data import *
+from train_models import *
 from settings import *
 from operator import itemgetter
+import numpy as np
 
 class NN_split(nn.Module):
 	def __init__(self):
 		super(NN_split, self).__init__()
 		self.linears = nn.ModuleList(self.make_linears())
-		self.tanh = nn.Tanh()
+		self.relu = nn.ReLU()
 		self.fc2 = nn.Linear(hidden_size - len(weights_to_test), 2)
 
 		self.load_starting_seed()
 
 	def forward(self, input_vector):
 		out = self.fc1(input_vector) #custom fc1 compared to other models
-		out = self.tanh(out)
+		out = self.relu(out)
 		out = self.fc2(out)
-		#out = F.log_softmax(out, dim=1)
+		out = F.log_softmax(out, dim=1)
 		return out
 
 	def fc1(self, input_vector):

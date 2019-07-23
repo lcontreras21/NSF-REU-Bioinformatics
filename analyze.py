@@ -5,50 +5,68 @@ Check if numbers are repeated and how many times there are overlap
 from settings import *
 from copy import deepcopy
 from collections import Counter
+import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
 def process_files(files=[ws_save_loc, w_save_loc, bs_save_loc, b_save_loc]):
 	to_return = []
 	for name in files:
-		f = open(name, "r")
-		dist_data = []
-		for line in f:
-			data = line.split()
-			dist_data.append((data[0], list(map(int,data[1:]))))
-		f.close()
-		to_return.append(dist_data)
+		with open(name, "r") as f:
+			file_data = []
+			for line in f:
+				line = line.split("\t-\t")
+				line[1:] = [line[i].split("\t") for i in range(1,4)]
+				line[-1][-1] = line[-1][-1][:-1]
+				line[1:] = [[] if line[i] == [''] else line[i] for i in range(1,4)]
+				line[1:] = [list(map(int, line[i])) for i in range(1,4)]
+				file_data.append(line)
+		to_return.append(file_data)
 	return to_return
 
 def normalize(d):
-	total = sum(d.values())
+	# d is numpy array
+	total = d.sum()
 	if total == 0: 
 		total = 1
-	d = {i:(d[i]/total) for i in d}
+	d = d / total
 	return d
 
-def make_distributions(data, data_type, normalized=False):
-	# normalized can be True, False, or "both"
-	# data = [w_s, w, b_s, b]
-	# dists = [split, dense, zerow, d-p, d-s, p-s]	
-	key = {"split": 0, "dense": 1, "zerow": 2, 
-			"dense-zerow": 3, "dense-split": 4, "zerow-split": 5}
-	dists = [{i:0 for i in range(hidden_size)} for i in range(6)]
+def make_distributions(datasets, data_type, normalized=False):
+	'''
+	Parameter information:
+		normalized can be True, False, or "both"
+		datasets = [weight_overlap, weights, bias_overlap, bias]
+		each dataset in datasets is list(name, max, min, summed)
+	'''	
+	name_key = {"Split": 0, "Dense": 1, "Zero-weights": 2, 
+			"Dense_Zero-weights": 3, "Dense_Split": 4, "Zero-weights_Split": 5}
+	#dists [contains three lists for max, min, summed with  
+	#	[each of the following being a dict: {split}, {dense}, {zerow}, {d-p}, {d-s}, {p-s}
+	#	recording the statistics for each weight]
+	dists = [[np.zeros(50, dtype=int) for j in range(6)] for i in range(3)]
+	normalized_dists = deepcopy(dists)
 	if data_type == "weights":
-		x = data[0] + data[1]
+		x = datasets[0] + datasets[1]
 	elif data_type == "biases":
-		x = data[2] + data[3]
-	for data_sample in x:
-		name, weights = key[data_sample[0]], data_sample[1]
-		for weight in weights:
-			dists[name][weight] += 1
+		x = datasets[2] + datasets[3]
+	for dataset in x:
+		name_index = name_key[dataset[0]]
+		dataset = dataset[1:]
+		for polarity in range(3):
+			for value in dataset[polarity]:
+				# access the max, min, or summed data
+				# then access which model the data belongs to
+				# then keep track of the weight value in the dictionary
+				dists[polarity][name_index][value] += 1
+			normalized_dists[polarity][name_index] = normalize(dists[polarity][name_index])
+
 	if normalized == "both":
-		dists_norm =[normalize(dists[i]) for i in range(6)]
-		return dists, dists_norm
-	
+		return dists, normalized_dists
+
 	if normalized:
-		dists = [normalize(dists[i]) for i in range(6)]
-		
+		return normalized_dists
+
 	return dists
 
 # Three types of data: dense, split, zero-weights
@@ -70,11 +88,11 @@ def draw_graph(dists, title, save_location="diagrams/distribution.pdf"):
 		text = "No weights removed"
 	plt.figtext(0.5, 0.02, text, ha="center", va="bottom")
 	plt.rcParams['xtick.labelsize'] = 4
-
 	for index, ax in enumerate(axs_list):
-		ax.bar(list(dists[index].keys()), list(dists[index].values()), color=colors[index], align='center')
+		current_dist = dict(enumerate(dists[index]))
+		ax.bar(current_dist.keys(), current_dist.values(), color=colors[index], align='center')
 		ax.set_title(names[index])
-		ax.set_xticklabels(labels=list(dists[index].keys()), minor=True, rotation='vertical')
+		ax.set_xticklabels(labels=current_dist.keys(), minor=True, rotation='vertical')
 	
 	plt.savefig(save_location)
 
@@ -82,11 +100,16 @@ def draw_graphs(which="both"):
 	# which can be one of {'both', 'weights', biases'}
 	processed_data = process_files()
 	key = {"weights":["weights"], "biases":["biases"], "both": ["weights", "biases"]}
+
 	for data_type in key[which]:
 		unnorm, norm = make_distributions(processed_data, data_type, normalized="both")
-		data_pair = [(unnorm, "_unnorm"), (norm, "_norm")]
-		for data, name in data_pair:
-			draw_graph(data, "Top 5 " + data_type.capitalize(), save_location=image_path + data_type + name + modded + ".pdf")
+		data_pair = [(unnorm, "_unnormalized"), (norm, "_normalized")]
+		polarity_names = ["Positive", "Negative", "Summed"]
+		for data_style, name in data_pair:
+			for i, polarity_data in enumerate(data_style):
+				graph_name = "Top 5 " + polarity_names[i] + " " + data_type.capitalize()
+				save_name = image_path + data_type + "_" + polarity_names[i].lower() + name + modded + ".pdf"
+				draw_graph(polarity_data, graph_name, save_location=save_name)
 
 def biggest_weights(n, pretty_print=False):
 	# Necessary stuff to be able to get info from any file
@@ -134,7 +157,6 @@ def closeness():
 def print_percentages(names=["Zero-weights", "Dense", "Split"]):
 	# info with list of [sensitivity, specificity, correctness]
 	percents = {"Zero-weights": [0]*3, "Dense": [0]*3, "Split": [0]*3}
-	key = {"Zero-weights": 0, "Dense": 1, "Split": 2}
 	total = 0
 	with open(percent_save_loc, "r") as f:
 		for line in f:
@@ -214,11 +236,8 @@ def reset_files():
 	for f in files:
 		open(f, "w").close()
 
+	open(all_gene_weights_loc, "wb").close()
+
 if __name__ == "__main__":
-	#draw_graphs(which="both")
-	#closeness()
-	#verify_removed_weights()
-	print_percentages()
-	#show_differences()
-	#weight_info()
-	#print()
+	draw_graphs(which="both") 
+

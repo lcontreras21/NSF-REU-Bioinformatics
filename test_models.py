@@ -33,7 +33,7 @@ def test_models(models, testing_data):
 				expected = make_expected(label, label_to_ix)
 				outputs = model(gene_vec)
 				_, predicted = torch.max(outputs.data, 1)
-				vals["total"][1] += expected.size(0)
+				vals["total"][1] += 1
 				
 				vals[expected.item()][1] += 1 # Account for total pos or neg
 				if torch.equal(predicted, expected):

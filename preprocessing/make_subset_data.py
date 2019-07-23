@@ -1,5 +1,24 @@
 import random
 
+def create_train_test_data():
+	files = {"_normal_samples.txt":(584, 146), "_tumor_samples.txt": (7975, 1994)}
+	for f in files:
+		training_size, testing_size = files[f]
+		all_samples = []
+		with open("text_files/" + data + f) as text_file:
+			for line in text_file:
+				all_samples.append(line)
+		random.shuffle(all_samples)
+		training = all_samples[:training_size]
+		testing = all_samples[-testing_size:]
+		
+		text_files = {"train": ("text_files/training_data/", training),"test": ("text_files/testing_data/", testing)}
+		for text_file in text_files:
+			loc = text_files[text_files][0] + name + text_file + f
+			with open(loc, "w") as datafile:
+				for line in text_files[t][1]:
+					datafile.write(line)
+
 # Make a subset dataset based on the gene groups
 # Save that alternative to /text_files/
 def make_subset_dataset():
@@ -64,24 +83,6 @@ def name_files():
 
 	y.close()
 	u.close()
-
-def create_train_test_data(name):
-	files = {"_normal_samples.txt":(584, 146), "_tumor_samples.txt": (7975, 1994)}
-	for f in files:
-		training_size, testing_size = files[f]
-		all_samples = []
-		with open("text_files/" + name + f) as text_file:
-			for line in text_file:
-				all_samples.append(line)
-		random.shuffle(all_samples)
-		training = all_samples[:training_size]
-		testing = all_samples[-testing_size:]
-		
-		text_files = {"train": ("text_files/training_data/", training),"test": ("text_files/testing_data/", testing)}
-		for t in text_files:
-			with open(text_files[t][0] + name + text_file + f, "w") as datafile:
-				for line in text_files[t][1]:
-					datafile.write(line)
 
 def find_missing_genes():
 	gene_file = open("text_files/gene_pairs.pickle", "rb")

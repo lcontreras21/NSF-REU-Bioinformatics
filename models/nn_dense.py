@@ -2,6 +2,8 @@
 import torch.nn as nn
 from settings import *
 from models.process_data import *
+from train_models import *
+import numpy as np
 
 class NN_dense(nn.Module):
 	def __init__(self, hidden_size=hidden_size):
