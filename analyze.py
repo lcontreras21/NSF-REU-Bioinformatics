@@ -1,158 +1,121 @@
 '''
-Open the saved data from the files and analyze them
-Check if numbers are repeated and how many times there are overlap
+Analyze weights from the hidden layer to the output layer
 '''
 from settings import *
-from copy import deepcopy
-from collections import Counter
+from collect_weights import * 
+from operator import itemgetter
 import numpy as np
+from copy import deepcopy
 import matplotlib.pyplot as plt
-import sys
 
-def process_files(files=[ws_save_loc, w_save_loc, bs_save_loc, b_save_loc]):
-	to_return = []
-	for name in files:
-		with open(name, "r") as f:
-			file_data = []
-			for line in f:
-				line = line.split("\t-\t")
-				line[1:] = [line[i].split("\t") for i in range(1,4)]
-				line[-1][-1] = line[-1][-1][:-1]
-				line[1:] = [[] if line[i] == [''] else line[i] for i in range(1,4)]
-				line[1:] = [list(map(int, line[i])) for i in range(1,4)]
-				file_data.append(line)
-		to_return.append(file_data)
-	return to_return
+def load_output_data():
+	files = [fc2_weight_data_loc, fc2_bias_data_loc] 
+	weight_data = []
+	bias_data = []
+	with open(files[0], "r") as f:
+		for line in f:
+			line = line.split("\t-\t")
+			line[1] = line[1].replace("\n", "")
+			line[1] = line[1].split("\t")
+			line[1] = [eval(i) for i in line[1]]
+			weight_data.append(line)
+	with open(files[1], "r") as f:
+		for line in f:
+			line = line.split("\t-\t")
+			line[1] = line[1].replace("\n", "")
+			line[1] = line[1].split("\t")
+			line[1] = [float(i) for i in line[1]]
+			bias_data.append(line)
+	return weight_data, bias_data
 
-def normalize(d):
-	# d is numpy array
-	total = d.sum()
-	if total == 0: 
-		total = 1
-	d = d / total
-	return d
+def normalized(dist):
+	dist_sum = dist.sum()
+	normed_dist = dist / dist_sum
+	return normed_dist
 
-def make_distributions(datasets, data_type, normalized=False):
-	'''
-	Parameter information:
-		normalized can be True, False, or "both"
-		datasets = [weight_overlap, weights, bias_overlap, bias]
-		each dataset in datasets is list(name, max, min, summed)
-	'''	
-	name_key = {"Split": 0, "Dense": 1, "Zero-weights": 2, 
-			"Dense_Zero-weights": 3, "Dense_Split": 4, "Zero-weights_Split": 5}
-	#dists [contains three lists for max, min, summed with  
-	#	[each of the following being a dict: {split}, {dense}, {zerow}, {d-p}, {d-s}, {p-s}
-	#	recording the statistics for each weight]
-	dists = [[np.zeros(50, dtype=int) for j in range(6)] for i in range(3)]
-	normalized_dists = deepcopy(dists)
-	if data_type == "weights":
-		x = datasets[0] + datasets[1]
-	elif data_type == "biases":
-		x = datasets[2] + datasets[3]
-	for dataset in x:
-		name_index = name_key[dataset[0]]
-		dataset = dataset[1:]
-		for polarity in range(3):
-			for value in dataset[polarity]:
-				# access the max, min, or summed data
-				# then access which model the data belongs to
-				# then keep track of the weight value in the dictionary
-				dists[polarity][name_index][value] += 1
-			normalized_dists[polarity][name_index] = normalize(dists[polarity][name_index])
+def build_distributions(n, normalize=False):
+	weight_data, bias_data = load_output_data()
+	model_names = ["Zero-weights", "Dense", "Split"]
+	# weight_dists {track models
+	#					{track output node
+	#						{track high and low weights separately
+	#							{make distributions on those weights
+	weight_dists = {model_name: {i: {pos_neg: np.zeros(hidden_size) for pos_neg in ["top", "low"]} for i in range(2)} for model_name in model_names}
+	# bias_dists {track models
+	#				{track output node
+	#					{record how many times it was positive or negative [neg, pos]
+	bias_dists = {model_name: {node: np.zeros(2) for node in range(2)} for model_name in model_names}
+	for sample in weight_data:
+		model_name, hidden_to_outer = sample[0], sample[1]
+		for i, weights in enumerate(hidden_to_outer):
+				weights = dict(enumerate(weights))
+				sorted_weights = sorted(weights.items(), key=itemgetter(1), reverse=True)
+				top_weights = list(list(zip(*sorted_weights[:n]))[0])
+				low_weights = list(list(zip(*sorted_weights[-n:]))[0])
+				weight_dists[model_name][i]["top"][top_weights] += 1
+				weight_dists[model_name][i]["low"][low_weights] += 1
+	for sample in bias_data:
+		model_name, hidden_to_outer = sample[0], sample[1]
+		for i, bias_val in enumerate(hidden_to_outer):
+			if bias_val > 0:
+				bias_dists[model_name][i][1] += 1
+			else:
+				bias_dists[model_name][i][0] += 1
+	if normalize:
+		norm_bias = deepcopy(bias_dists)
+		norm_weight = deepcopy(weight_dists)
+		for model_name in model_names:
+			for node in range(2):
+				norm_bias[model_name][node] = normalized(norm_bias[model_name][node])
+				for pos_neg in ["top", "low"]:
+					norm_weight[model_name][node][pos_neg] = normalized(norm_weight[model_name][node][pos_neg])
+		return norm_weight, norm_bias
+	return weight_dists, bias_dists
 
-	if normalized == "both":
-		return dists, normalized_dists
+def draw_distributions(n, normalize=False):
+	weight_dists, bias_dists = build_distributions(n, normalize)
+	name = {True: "Normalized", False: "Unnormalized"}
+	draw_graphs(weight_dists, name[normalize], "Weights")
+	draw_graphs(bias_dists, name[normalize], "Biases")
 
-	if normalized:
-		return normalized_dists
-
-	return dists
-
-# Three types of data: dense, split, zero-weights
-def draw_graph(dists, title, save_location="diagrams/distribution.pdf"):
-	# dists = [split, dense, zerow, d-p, d-s, p-s]i
-	names = ["Split Model", "Dense Model", "Zero-weights Model", 
-			"Dense-Zero Overlap", "Dense-Split Overlap", "Zero-Split Overlap"]
-	colors = ["r", "g", "b", "tab:grey", "tab:brown", "tab:purple"]
+def draw_graphs(dists, name, datastyle):
+	model_names = ["Zero-weights", "Dense", "Split"] #column titles
+	node_names = ["Node 0", "Node 1"] #row titles
+	labels = [["Highest", "Lowest"], ["Positve", "Negative"]]
 	
-	fig, axs = plt.subplots(3, 2, sharey=True)
-	axs = axs.tolist()
-	axs_list = [inner for outer in axs for inner in outer]
-	fig.suptitle("Distribution of " + title)
-	fig.subplots_adjust(hspace=0.5)
-	if test_behavior:
-		weights_to_test.sort()
-		text =  title.split()[-1] + " removed are " + ", ".join(map(str, weights_to_test))
-	else:
-		text = "No weights removed"
-	plt.figtext(0.5, 0.02, text, ha="center", va="bottom")
-	plt.rcParams['xtick.labelsize'] = 4
-	for index, ax in enumerate(axs_list):
-		current_dist = dict(enumerate(dists[index]))
-		ax.bar(current_dist.keys(), current_dist.values(), color=colors[index], align='center')
-		ax.set_title(names[index])
-		ax.set_xticklabels(labels=current_dist.keys(), minor=True, rotation='vertical')
+	fig, axs = plt.subplots(2, 3, figsize=(12, 8), sharey=True, sharex=True)
+	fig.suptitle(name + " Distribution of Positive and Negative " + datastyle + " for each output node")
 	
-	plt.savefig(save_location)
+	# Annotating row and columns
+	pad = 5
+	for ax, col in zip(axs[0], model_names):
+		ax.annotate(col, xy=(0.5, 1), xytext=(0, pad),
+			xycoords="axes fraction", textcoords="offset points", 
+			size="large", ha="center", va="baseline")
+	for ax, row in zip(axs[:,0], node_names):
+		ax.annotate(row, xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
+				xycoords=ax.yaxis.label, textcoords="offset points",
+				size="large", ha="right", va="center")
+		#fig.tight_layout()
+	fig.subplots_adjust(left=0.15, top=0.90)
 
-def draw_graphs(which="both"):
-	# which can be one of {'both', 'weights', biases'}
-	processed_data = process_files()
-	key = {"weights":["weights"], "biases":["biases"], "both": ["weights", "biases"]}
+	width = 0.35
+	for node, row in enumerate(axs):
+		for index, ax in enumerate(row):
+			if datastyle.lower() == "weights":
+				top = dists[model_names[index]][node]["top"]
+				low = dists[model_names[index]][node]["low"]
+				ind = np.arange(len(top))
+			else:
+				top = dists[model_names[index]][node][1] 
+				low = dists[model_names[index]][node][0] 
+				ind = np.arange(2)
+			bar1 = ax.bar(ind + width/2, top, width, label="Highest", color="g")
+			bar2 = ax.bar(ind - width/2, low, width, label="Lowest", color="r") 
+			#ax.set_xticks(ind)
+	axs[0][0].legend()
+	plt.savefig(datastyle+"_test.pdf")
 
-	for data_type in key[which]:
-		unnorm, norm = make_distributions(processed_data, data_type, normalized="both")
-		data_pair = [(unnorm, "_unnormalized"), (norm, "_normalized")]
-		polarity_names = ["Positive", "Negative", "Summed"]
-		for data_style, name in data_pair:
-			for i, polarity_data in enumerate(data_style):
-				graph_name = "Top 5 " + polarity_names[i] + " " + data_type.capitalize()
-				save_name = image_path + data_type + "_" + polarity_names[i].lower() + name + modded + ".pdf"
-				draw_graph(polarity_data, graph_name, save_location=save_name)
-
-def biggest_weights(n, pretty_print=False):
-	# Necessary stuff to be able to get info from any file
-	processed_data = process_files()
-	dists = make_distributions(processed_data, "weights", normalized=False)
-	
-	# returning top five biggest weights
-	top = []
-	for dist in dists:
-		top.append(dict(Counter(dist).most_common(n)))
-	for i, item in enumerate(top):
-		x = sorted(item.items(), key=lambda x: x[1], reverse=True)
-		output = "{"
-		for pair in x:
-			output += "{:02}".format(pair[0]) + ": " + "{:02}".format(pair[1]) + ", "
-		output += "\b\b}"
-		if pretty_print:
-			print(output)
-		top[i] = x
-	# top = [split, dense, zerow, dz, ds, zs] dicts 
-	return top[:n]
-
-def closeness():
-	processed_dists = biggest_weights(50)
-	split, zerow = processed_dists[0], processed_dists[2]	
-	same, close = [], []
-
-	for i, (key, value) in enumerate(split):
-		try:
-			if key == zerow[i - 1][0]:
-				close.append((key, value, zerow[i - 1][1]))
-			elif key == zerow[i + 1][0]:
-				close.append((key, value, zerow[i + 1][1]))
-		except:
-			continue
-		if key == zerow[i][0]:
-			same.append((key, value, zerow[i][1]))
-	print("If the split and the zero-weights models had", 
-			"the same weights at the same index\n", same)
-	print("If the split and the zero-weights models have",
-			"a similar weight index\n", close)
-	print("How many times the two models overlapped during",
-			"the same session\n", processed_dist[5][:5])
 
 def print_percentages(names=["Zero-weights", "Dense", "Split"]):
 	# info with list of [sensitivity, specificity, correctness]
@@ -170,11 +133,12 @@ def print_percentages(names=["Zero-weights", "Dense", "Split"]):
 	print(" " * 11, "Sensitivity", "Specificity", "Correctness", sep="\t")
 	for model in names:
 		percents[model] = ["{0:.9f}".format(percents[model][i] / total) for i in range(3)]
-		print("{0: <14}".format(str(model)), *percents[model], sep="\t")	
-
+		print("{0: <14}".format(str(model)), *percents[model], sep="\t")
+		
+# Probably don't need this function but it's good to have and use
 def verify_removed_weights():
-	if test_behavior: 
-		processed_data = process_files()
+	if test_behavior:
+		processed_data = process_data()
 		# only interested in the main files, not overlap
 		# that data is at first and third index
 		datasets = [processed_data[1], processed_data[3]]
@@ -185,59 +149,13 @@ def verify_removed_weights():
 			for ii, (model_name, big_weights) in enumerate(dataset):
 				error = names[i] + " " + model_name + " " + str(ii) + "\n"
 				mistakes = [weight for weight in weights_to_test if weight in big_weights and model_name != "dense"]
-				if len(mistakes) != 0:	
+				if len(mistakes) != 0:
 					print(error.join([str(x) for x in mistakes]))
 				count += len(mistakes)
 		if count == 0:
 			print("Weights were properly removed")
 	else:
 		print("No need to test important weights. Make sure this is intentional.")
-
-# Once unedited data, and modified weight data has been collected, this function can be run to show difference in plots
-def show_differences():
-	modded_dists = make_distributions(process_files(), "weights", normalized=True)
-	files = [ws_save_loc, w_save_loc, bs_save_loc, b_save_loc]
-	files = [i.replace(modded, "") for i in files]
-	unmodded_dists = make_distributions(process_files(files), "weights", normalized=True)
 	
-	# each distribution is a list of dicts[split, dense, zerow, d-p, d-s, p-s]
-	# calculate difference with modded being subtracted from the normal data
-	difference_dists = []
-	for i in range(6):
-		diff = {key:unmodded_dists[i][key] - modded_dists[i][key] for key in unmodded_dists[i].keys()}
-		difference_dists.append(diff)
-
-	draw_graph(difference_dists, "Difference of Normal Data and Weight-Removed Data", save_location=image_path)	
-
-# collect information on the heaviest weights that were removed
-def weight_info():
-	f = open(text_gene_groups, "r")
-	info = [] # tuple (index, gene group name, number of genes in group)
-	for index, line in enumerate(f):
-		if index in weights_to_test:
-			line = line.split()
-			info.append((index, line[0], len(line[2:])))
-	for i in info:
-		print(i)
-
-def gene_groups_info():
-	f = open(text_gene_groups, "r")
-	info = []
-	for line in f:
-		info.append(len(line.split()[2:]))
-	counts = {i:info.count(i) for i in set(info)}
-	x = list(counts.keys())
-	x.sort()
-	for i in list(x):
-		print(i, counts[i])
-
-def reset_files():
-	files = [ws_save_loc, w_save_loc, bs_save_loc, b_save_loc, percent_save_loc, all_weight_data_loc]
-	for f in files:
-		open(f, "w").close()
-
-	open(all_gene_weights_loc, "wb").close()
-
 if __name__ == "__main__":
-	draw_graphs(which="both") 
-
+	draw_distributions(5)

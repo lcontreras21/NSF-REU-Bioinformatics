@@ -33,23 +33,20 @@ text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 stored_dict_locs = {name:"state_dicts/nn_" + name + ".pt" for name in ["Split", "Dense", "Zero-weights"]}
 
 # where to save run percentages if enabled
-text_path = "text_files/analysis/testing_parameters/"
-image_path = "diagrams/testing_parameters/"
+text_path = "text_files/analysis/pos_neg_interaction/"
+image_path = "" #diagrams/pos_neg_interaction/"
 modded = ""
 replace = "_modded"
 if test_behavior:
 	modded = replace
 
 percent_save_loc = text_path + "percentages" + modded + ".txt"
-all_weight_data_loc = text_path + "all_weights.txt"
-all_gene_weights_loc = text_path + "all_gene_weights.pickle"
+fc1_weight_data_loc = text_path + "fc1_weights.txt"
+fc1_bias_vals_loc = text_path + "fc1_bias_vals.txt"
+fc1_gene_weights_loc = text_path + "fc1_gene_weights.pickle"
 
-# where to save weights and biases if enabled
-bs_save_loc = text_path + "biases_similar" + modded + ".txt"
-b_save_loc = text_path + "biases" + modded + ".txt"
-
-ws_save_loc = text_path + "weights_similar" + modded + ".txt"
-w_save_loc = text_path + "weights" + modded + ".txt"
+fc2_weight_data_loc = text_path + "fc2_weights.txt"
+fc2_bias_data_loc = text_path + "fc2_bias.txt"
 
 # other storage locations
 starting_seed_loc = "text_files/starting_seed.pickle"

@@ -6,6 +6,7 @@ from models.nn_split import *
 from models.process_data import set_starting_seed
 from preprocessing.make_subset_data import create_train_test_data 
 from test_models import *
+from train_models import *
 from collect_weights import *
 from analyze import *
 import sys
@@ -22,17 +23,12 @@ def analyze(n):
 	print(*settings_message, sep=", ")
 	correct = input("[Y, N] ")
 	if correct.lower() in ["yes", "y", "ye"]:
-		for i in range(5):
-			print("\033[F", end= "\r")
-			print(" " * 100, end="\r")
 		pass	
 	else:
 		print("Aborting...")
 		return
 	
 	start_time = time.monotonic()
-	# Testing and training models, Data Collection loop
-	print(*settings_message, sep=", ")	
 	
 	#create_train_test_data()
 	training_data = load_data("train")
@@ -74,8 +70,9 @@ def analyze(n):
 	print("\nPercentages from session")
 	print_percentages()
 
-	print("\nDrawing distributions and saving to files under", image_path)
-	draw_graphs(which="both")
+	#if record_data:
+	#	print("\nDrawing distributions and saving to files under", image_path)
+	#	draw_graphs(which="both")
 
 	if testing_parameters:
 		reset_files()
@@ -86,4 +83,4 @@ def analyze(n):
 
 if __name__ == "__main__":
 	analyze(sys.argv[1])
-	#collect_weights()
+	#reset_files()
