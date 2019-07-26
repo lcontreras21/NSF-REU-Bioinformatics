@@ -80,3 +80,35 @@ def get_starting_seed():
 		starting_seed = pickle.load(f)
 	return starting_seed
 
+
+# collect information on the heaviest weights that were removed
+def weight_info(interesting_weights=weights_to_test):
+	with open(text_gene_groups, "r") as f:
+		info = [] # tuple (index, gene group name, number of genes in group)
+		for index, line in enumerate(f):
+			if index in interesting_weights:
+				line = line.split()
+				info.append((index, line[0], len(line[2:])))
+		for i in info:
+			print(i)
+
+def gene_groups_info():
+	f = open(text_gene_groups, "r")
+	info = []
+	for line in f:
+		info.append(len(line.split()[2:]))
+	counts = {i:info.count(i) for i in set(info)}
+	x = list(counts.keys())
+	x.sort()
+	for i in list(x):
+		print(i, counts[i])
+
+def reset_files():
+	files = [fc1_weight_data_loc, fc1_bias_vals_loc, fc1_gene_weights_loc, fc2_weight_data_loc, fc2_bias_data_loc, percent_save_loc]
+	for f in files:
+		open(f, "w").close()
+	open(fc1_gene_weights_loc, "wb").close()
+
+if __name__ == "__main__":
+	reset_files()
+
