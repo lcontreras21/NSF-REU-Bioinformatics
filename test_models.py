@@ -58,4 +58,6 @@ def test_models(models, testing_data):
 		print("\nRuntime:", timedelta(seconds=time.monotonic() - start_time))
 
 if __name__ == "__main__":
+	testing_data = load_data("test")
+	debug = True
 	test_models([NN_split(), NN_zerow(), NN_dense()], testing_data)	

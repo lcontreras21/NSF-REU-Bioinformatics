@@ -93,7 +93,7 @@ def draw_gene_graphs(which="both"):
 	key = {"weights":["weights"], "biases":["biases"], "both": ["weights", "biases"]}
 
 	for data_type in key[which]:
-		unnorm, norm = make_distributions(processed_data, data_type, normalized="both")
+		unnorm, norm = make_gene_distributions(processed_data, data_type, normalized="both")
 		data_pair = [(unnorm, "_unnormalized"), (norm, "_normalized")]
 		polarity_names = ["Positive", "Negative", "Summed"]
 		for data_style, name in data_pair:
@@ -103,40 +103,11 @@ def draw_gene_graphs(which="both"):
 				for i, polarity_data in enumerate(data_style):
 					graph_name = "Top 5 " + polarity_names[i] + " " + data_type.capitalize()
 					save_name = image_path + data_type + "_" + polarity_names[i].lower() + name + modded + ".pdf"
-					draw_graph(polarity_data, graph_name, save_location=save_name)
+					draw_gene_graph(polarity_data, graph_name, save_location=save_name)
 
-def gene_statistics(n):
-	#weights_to_test = [26, 27, 19, 34, 25, 3, 8, 13, 41]
-	weights_to_test = [2]
-	model_node_data = process_gene_weights(weights_to_test)
-	model_names = ["Split", "Dense", "Zero-weights"]
-	top_gene_dists = {model_name:{node:[] for node in weights_to_test} for model_name in model_names}
 
-	for model_name in model_names:
-		print(model_name)
-		for node in model_node_data[model_name]:
-			print(node)
-			for x in model_node_data[model_name][node]:
-				x = list(enumerate(x.tolist()))
-				sorted_x = sorted(x, key=itemgetter(1))
-				top_x = list(list(zip(*sorted_x[-n:]))[0])
-				min_x = list(list(zip(*sorted_x[:n]))[0])
-				top_gene_dists[model_name][node].append()
 
-				def order_dists(dists, n):
-					# Order the distributions to see the heaviest weights.
-					polarity_names = ["Positive", "Negative", "Summed"]
-					datatype_names = ["Split", "Dense", "Zero-weights", "Dense_Zero-weights", "Dense_Split", "Zero-weights_Split"]
-					#datatype_names = ["Split", "Zero-weights"]
-					for i, polarity in enumerate(dists):
-						print(polarity_names[i])
-						#polarity = [polarity[0], polarity[2]]
-						for j, datatype in enumerate(polarity[:3]):
-							datatype = dict(enumerate(datatype))
-							sorted_dt = list(zip(*sorted(datatype.items(), key=itemgetter(1), reverse=True)[:n]))[0]
-							sorted_dt = ["{:02}".format(i) for i in sorted_dt]
-							print("{:12}".format(datatype_names[j]), sorted_dt)
-							print()
+
 
 if __name__ == "__main__":
 	pass

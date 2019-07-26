@@ -41,7 +41,7 @@ def build_distributions(n, normalize=False, output=False):
 	#					{track output node
 	#						{track high and low weights separately
 	#							{make distributions on those weights
-	weight_dists = {model_name: {i: {pos_neg: np.zeros(hidden_size, dtype=int) for pos_neg in ["top", "low"]} for i in range(2)} for model_name in model_names}
+	weight_dists = {model_name: {output_node: {pos_neg: np.zeros(hidden_size, dtype=int) for pos_neg in ["top", "low"]} for output_node in range(len(weight_data[0][1]))} for model_name in model_names}
 	# bias_dists {track models
 	#				{track output node
 	#					{record how many times it was positive or negative [neg, pos]
@@ -87,7 +87,7 @@ def draw_distributions(n, normalize=False):
 
 def draw_graphs(dists, name, datastyle, n, which="both"):
 	model_names = ["Zero-weights", "Dense", "Split"] #column titles
-	node_names = ["Node 0", "Node 1"] #row titles
+	node_names = ["Output node " + i for i in range(len(dists["Split"]))] #row titles
 	labels = {"top": "Highest", "low": "Lowest", 1:"Positive", 0: "Negative"}
 	key = {"Weights": ("top", "low"), "Biases": (1, 0)}
 	colors = {"top": "g", "low": "r", 1:"g", 0: "r"}
@@ -167,7 +167,42 @@ def verify_removed_weights():
 			print("Weights were properly removed")
 	else:
 		print("No need to test important weights. Make sure this is intentional.")
-	
+
+# Check how often each hallmark node is positive and negative for the output
+def weight_statistics():
+	weight_data, bias_data = load_output_data()
+	model_names = ["Zero-weights", "Dense", "Split"]
+	# {track each model
+	#	{track each output node
+	#		{track each hidden node
+	#			track how many times that hidden node was positive or negative
+	node_stats = {
+			model_name: {
+				output_index:{
+					hidden_index:np.zeros(4, dtype=int) 
+					for hidden_index in range(len(weight_data[0][1][0]))} 
+				for output_index in range(len(weight_data[0][1]))} 
+			for model_name in model_names}
+
+	for iteration in weight_data:
+		model_name, node_data = iteration[0], iteration[1]
+		for output_index, hidden_node_data in enumerate(node_data):
+			#print(max(hidden_node_data), min(hidden_node_data))
+			for hidden_index, hidden_node in enumerate(hidden_node_data):
+				if hidden_node > 0:
+					node_stats[model_name][output_index][hidden_index][1] += 1
+				else:
+					node_stats[model_name][output_index][hidden_index][0] += 1
+				if hidden_node > 0.2:
+					node_stats[model_name][output_index][hidden_index][3] += 1
+				elif hidden_node < -0.2:
+					node_stats[model_name][output_index][hidden_index][2] += 1
+	print("Split | neg | pos | < -0.2 | > 0.2 ")
+	pprint(node_stats["Split"])
+	print("Zero-weights | neg | pos | < -0.2 | > 0.2" )
+	pprint(node_stats["Zero-weights"])
+
 if __name__ == "__main__":
-	build_distributions(3, normalize=False, output=True)
+	#build_distributions(3, normalize=False, output=True)
 	#draw_distributions(3, normalize=False)
+	weight_statistics()

@@ -10,13 +10,16 @@ from datetime import timedelta
 import random
 from tqdm import tqdm
 from models.process_data import *
+from models.nn_split import *
+from models.nn_dense import *
+from models.nn_zerow import *
 
 def train_model(model, training_data):
 	start_time = time.monotonic()
 	# terminal message to track work
 	if debug:
 		print("Training", str(model), "model on the", data, "dataset with",
-		tumor_data_size, "Tumor samples and", normal_data_size, "Normal samples.")
+		7975, "Tumor samples and", 584, "Normal samples.")
 		print("Hyperparameters:",
 			num_epochs, "epochs,",
 			hidden_size, "neurons in the hidden layer,",
@@ -53,3 +56,10 @@ def train_model(model, training_data):
 	end_time = time.monotonic()
 	if debug:
 		print("Runtime:", timedelta(seconds=end_time - start_time), "\n")
+
+if __name__ == "__main__":
+	training_data = load_data("train")
+	debug = True
+	models = [NN_dense(), NN_split(), NN_zerow()]
+	for model in models:
+		train_model(model, training_data)
