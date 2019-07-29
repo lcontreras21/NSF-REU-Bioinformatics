@@ -4,15 +4,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-import time
-from settings import *
-from datetime import timedelta
-import random
-from tqdm import tqdm
 from models.process_data import *
 from models.nn_split import *
 from models.nn_dense import *
 from models.nn_zerow import *
+
+from settings import *
+
+import time
+from datetime import timedelta
+import random
+from tqdm import tqdm
+
 
 def train_model(model, training_data):
 	start_time = time.monotonic()
@@ -62,6 +65,6 @@ if __name__ == "__main__":
 	training_data = load_data("train")
 	debug = True
 	#models = [NN_dense(), NN_split(), NN_zerow()]
-	models = [NN_dense()]
+	models = [NN_split()]
 	for model in models:
 		train_model(model, training_data)

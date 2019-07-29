@@ -25,14 +25,15 @@ def print_dense_percents(size, time_to_run):
 
 def test_dense():
 	hidden_sizes = [1, 10, 25, 50, 75, 100, 150, 300, 500]
-	training_data = load_training_data()
+	training_data = load_data("train")
+	testing_data = load_data("test")
 	for i, size in enumerate(hidden_sizes):
 		start_size_time = time.monotonic()
 		set_starting_seed(size)
 		nn_dense = NN_dense(size)
 		for test in range(3):
 			train_model(nn_dense, training_data)
-			test_models(models=[NN_dense(size)])
+			test_models(testing_data, models=[NN_dense(size)])
 		end_size_time = time.monotonic()
 		print_dense_percents(size, timedelta(seconds=end_size_time - start_size_time))
 		reset_files()

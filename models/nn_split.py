@@ -35,20 +35,16 @@ class NN_split(nn.Module):
 		return hidden
 	
 	def make_linears(self):
-		self.gene_group_indicies = []
-		fc = []  
-		gene_indexes = gene_dict()
-		gene_groups = import_gene_groups()
-		for i, gene_group in enumerate(gene_groups):
+		self.gene_group_indicies, fc = [], []
+		self.gene_group_indicies = read_indicies()
+		for i, gene_group in enumerate(gene_group_indicies):
 			if test_behavior and i in weights_to_test:
 				fc.append(nn.Linear(1,1))
 				fc[-1].weight = nn.Parameter(torch.FloatTensor([0]), requires_grad=False)
 				fc[-1].bias = nn.Parameter(torch.FloatTensor([0]), requires_grad=False)
 				self.gene_group_indicies.append([])
 			else:
-				group_indices = get_gene_indicies(gene_group, gene_indexes)
-				fc.append(nn.Linear(len(group_indices), 1))
-				self.gene_group_indicies.append(group_indices)
+				fc.append(nn.Linear(len(gene_group), 1))
 		return fc
 
 	def split_data(self, input_vector):
@@ -72,9 +68,6 @@ class NN_split(nn.Module):
 	def __str__(self):
 		return "Split"
 
-def train_split_model(training_data):
-	train_model(NN_split(), training_data)
-
 if __name__ == "__main__":
 	training_data = load_training_data()
-	train_split_model(training_data)
+	train_model(NN_split(), training_data)

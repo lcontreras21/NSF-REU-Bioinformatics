@@ -13,7 +13,7 @@ import sys
 import time
 from datetime import timedelta
 
-def analyze(n):
+def main(n):
 	presets = [debug, record_data, test_behavior, seed, data]
 	message = ["|Settings| Debugging is ", "Data recording is ", "Testing weight environment is ", "Fixed starting seed is ", "Dataset is "]
 	status = {True: "on", False: "off", "subset": "subset dataset", "full": "full dataset"}
@@ -31,6 +31,7 @@ def analyze(n):
 	start_time = time.monotonic()
 	
 	#create_train_test_data()
+	save_indicies()
 	training_data = load_data("train")
 	testing_data = load_data("test")
 	
@@ -57,7 +58,7 @@ def analyze(n):
 			collect_weights()
 
 		# Tests the models and saves percentages to file
-		test_models([NN_dense(), NN_split(), NN_zerow()], testing_data)
+		test_models(testing_data)
 	loop_time = time.monotonic()
 	print(" " * 50, end="\r")
 	print("\033[F-----Finished", n, "tests in", timedelta(seconds=loop_time - start_time))
@@ -82,5 +83,5 @@ def analyze(n):
 	
 
 if __name__ == "__main__":
-	analyze(sys.argv[1])
+	main(sys.argv[1])
 	#reset_files()

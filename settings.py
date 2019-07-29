@@ -32,15 +32,11 @@ text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 
 stored_dict_locs = {name:"state_dicts/nn_" + name + ".pt" for name in ["Split", "Dense", "Zero-weights"]}
 
-# where to save run percentages if enabled
+# where to save run save and store various files if enabled
 text_path = "text_files/analysis/sigmoid/"
 image_path = "diagrams/sigmoid/"
-modded = ""
-replace = "_modded"
-if test_behavior:
-	modded = replace
 
-percent_save_loc = text_path + "percentages" + modded + ".txt"
+percent_save_loc = text_path + "percentages.txt"
 fc1_weight_data_loc = text_path + "fc1_weights.txt"
 fc1_bias_vals_loc = text_path + "fc1_bias_vals.txt"
 fc1_gene_weights_loc = text_path + "fc1_gene_weights.pickle"

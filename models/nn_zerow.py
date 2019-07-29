@@ -16,8 +16,9 @@ class NN_zerow(nn.Module):
 		self.fc2 = nn.Linear(hidden_size, output_size)
 		
 		self.load_starting_seed()
-		self.make_mask()
-		#self.set_weights()
+		if len(weights_to_test) != 0:
+			self.make_mask()
+			self.mask()
 	
 	def forward(self, input_vector):
 		out = self.fc1(input_vector)
@@ -26,40 +27,34 @@ class NN_zerow(nn.Module):
 		#out = F.log_softmax(out, dim=1)
 		out = torch.sigmoid(out)
 
-		self.set_bias()
-		self.set_weights()
+		if len(weights_to_test) != 0:
+			self.mask()
 		return out
 
-	def make_mask(self):
-		gene_groups = import_gene_groups()
-		gene_indexer = gene_dict()
-		mask = np.array([[0] * input_size] * len(gene_groups))
-		for i, gene_group in enumerate(gene_groups):
+	def make_masks(self):
+		gene_group_indicies = read_indicies()
+		mask = np.array([[0] * input_size] * len(gene_group_indicies))
+		for i, gene_group in enumerate(gene_group_indicies):
 			if test_behavior and i in weights_to_test:
-				group_indices = []
-			else:
-				group_indices = get_gene_indicies(gene_group, gene_indexer)
-			mask[i][group_indices] = 1
+				gene_group = []
+			mask[i][gene_group] = 1
 		mask = torch.FloatTensor(mask)
 		self.mask = mask
+
+		mask = np.array([1] * hidden_size)
+		mask[weights_to_test] = 0
+		self.bias_mask = torch.FloatTensor(mask)
 
 	def load_starting_seed(self):
 		self.fc1.weight.data = get_starting_seed()
 
-	def set_weights(self):
-		self.fc1.weight.data *= self.mask
-
-	def set_bias(self):
-		mask = np.array([1] * hidden_size)
-		mask[weights_to_test] = 0
-		self.fc1.bias.data *= torch.FloatTensor(mask)
+	def mask(self):
+		self.fc1.weight.data *= self.weight_mask
+		self.fc1.bias.data *= self.bias_mask
 
 	def __str__(self):
 		return "Zero-weights"
 
-def train_zerow_model(training_data):
-	train_model(NN_zerow(), training_data)
-
 if __name__ == "__main__":
 	training_data = load_training_data()
-	train_zerow_model(training_data)
+	train_model(NN_zerow(), training_data)

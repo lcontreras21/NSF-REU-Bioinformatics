@@ -69,6 +69,21 @@ def get_gene_indicies(gene_group, gene_indexes):
 	indices.sort()
 	return indices
 
+def save_indicies():
+	gene_groups = import_gene_groups()
+	gene_indexer = gene_dict()
+	with open("text_files/gene_indicies.txt", "w") as f:
+		for gene_group in gene_groups:
+			x = get_gene_indicies(gene_group, gene_indexer)
+			f.write("\t".join(list(map(str, x))) + "\n")
+def read_indicies():
+	gene_indicies = []
+	with open("text_files/gene_indicies.txt", "r") as f:
+		for line in f:
+			line = list(map(int, line.split("\t")))
+			gene_indicies.append(line)
+	return gene_indicies
+
 def set_starting_seed(hidden_size=hidden_size):
 	test_layer = nn.Linear(input_size, hidden_size)
 	test_layer.weight.data.normal_(0.0, 1/(input_size**(0.5)))

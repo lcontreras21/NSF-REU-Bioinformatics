@@ -15,7 +15,9 @@ class NN_dense(nn.Module):
 		
 		self.hidden_size = hidden_size
 		self.load_starting_seed()
-		self.mask()
+		if len(weights_to_test) != 0:
+			self.make_mask()
+			self.mask()
 
 	def forward(self, input_vector):
 		out = self.fc1(input_vector)
@@ -24,7 +26,8 @@ class NN_dense(nn.Module):
 		#out = F.log_softmax(out, dim=1)
 		out = torch.sigmoid(out)
 
-		self.mask()
+		if len(weights_to_test) != 0:
+			self.mask()
 		return out
 	
 	def __str__(self):
@@ -34,19 +37,20 @@ class NN_dense(nn.Module):
 		self.fc1.weight.data = get_starting_seed()
 
 	def mask(self):
+		self.fc1.bias.data *= self.bias_mask
+		self.fc1.weight.data *= self.weight_mask
+
+	def make_mask(self):
 		# bias mask
 		mask = np.array([1] * self.hidden_size)
 		mask[weights_to_test] = 0
-		self.fc1.bias.data *= torch.FloatTensor(mask)
+		self.bias_mask = torch.FloatTensor(mask)
 
 		# weight mask
 		mask = np.array([[1] * input_size] * self.hidden_size)
 		mask[weights_to_test] = 0
-		self.fc1.weight.data *= torch.FloatTensor(mask)
-
-def train_dense_model(training_data):
-	train_model(NN_dense(), training_data)
+		self.weight_mask = torch.FloatTensor(mask)
 
 if __name__ == "__main__":
 	training_data = load_training_data()
-	train_dense_model(training_data)
+	train_model(NN_dense(), training_data)

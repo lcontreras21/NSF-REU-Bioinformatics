@@ -43,6 +43,7 @@ def build_distributions(n, normalize=False, output=False):
 	#				{track output node
 	#					{record how many times it was positive or negative [neg, pos]
 	bias_dists = {model_name: {node: np.zeros(2, dtype=int) for node in range(2)} for model_name in model_names}
+
 	for sample in weight_data:
 		model_name, hidden_to_outer = sample[0], sample[1]
 		for i, weights in enumerate(hidden_to_outer):
@@ -52,6 +53,7 @@ def build_distributions(n, normalize=False, output=False):
 				low_weights = list(list(zip(*sorted_weights[-n:]))[0])
 				weight_dists[model_name][i]["top"][top_weights] += 1
 				weight_dists[model_name][i]["low"][low_weights] += 1
+
 	for sample in bias_data:
 		model_name, hidden_to_outer = sample[0], sample[1]
 		for i, bias_val in enumerate(hidden_to_outer):
@@ -59,6 +61,7 @@ def build_distributions(n, normalize=False, output=False):
 				bias_dists[model_name][i][1] += 1
 			else:
 				bias_dists[model_name][i][0] += 1
+
 	if normalize:
 		norm_bias = deepcopy(bias_dists)
 		norm_weight = deepcopy(weight_dists)
@@ -172,7 +175,7 @@ def verify_removed_weights():
 		print("No need to test important weights. Make sure this is intentional.")
 
 # Check how often each hallmark node is positive and negative for the output
-def weight_statistics():
+def weight_statistics(cutoff=0.3):
 	weight_data, bias_data = load_output_data()
 	model_names = ["Zero-weights", "Dense", "Split"]
 	# {track each model
@@ -199,24 +202,22 @@ def weight_statistics():
 					node_stats[model_name][output_index][hidden_index][3] += 1
 				elif hidden_node < -0.1:
 					node_stats[model_name][output_index][hidden_index][2] += 1
-	print("Split | neg | pos | < -0.1 | > 0.1 ")
-	pprint(node_stats["Split"])
-	print("Zero-weights | neg | pos | < -0.1 | > 0.1" )
-	pprint(node_stats["Zero-weights"])
+	#print("Split | neg | pos | < -0.1 | > 0.1 ")
+	#pprint(node_stats["Split"])
+	#print("Zero-weights | neg | pos | < -0.1 | > 0.1" )
+	#pprint(node_stats["Zero-weights"])
 
-	'''	
-	for model_name in model_names:
+	for model_name in ["Zero-weights", "Split"]:
 		for output_index in [0]:
 			for hidden_index in range(50):
 				node_data = node_stats[model_name][output_index][hidden_index][2:]
-				max_index = np.argmax(node_data)
-				min_index = np.argmin(node_data)
+				max_index = int(np.argmax(node_data))
+				min_index = int(np.argmin(node_data))
 				percent = node_data[min_index] / node_data[max_index]
-				if percent > 0.40 and model_name != "Dense":
+				if percent > cutoff and model_name != "Dense":
 					print(model_name, output_index, hidden_index, node_data)
-	'''
 if __name__ == "__main__":
-	#build_distributions(3, normalize=False, output=True)
+	#build_distributions(5, normalize=False, output=False)
 	#draw_distributions(3, normalize=False)
-	weight_statistics()
+	weight_statistics(cutoff=0.8)
 
