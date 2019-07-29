@@ -28,9 +28,9 @@ def load_data(mode):
 
 # to be used for determining output of NN,
 # essentially our sigmoid function but other option is possible
-label_to_ix = {"Tumor": 0, "Normal": 1}
+label_to_ix = {"Tumor": [0], "Normal": [1]}
 def make_expected(label, label_to_ix):
-	return torch.LongTensor([label_to_ix[label]])
+	return torch.FloatTensor([label_to_ix[label]])
 
 # transforms a the gene list into a tensor for our NN
 def make_gene_vector(input_sample):

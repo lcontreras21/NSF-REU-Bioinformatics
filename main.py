@@ -44,13 +44,13 @@ def analyze(n):
 		status = "Currently on iteration " + "{:03}".format(i+1) + ", working on:"
 		
 		print(status, "Zerow", end="\r")
-		train_zerow_model(training_data)
+		train_model(NN_zerow(), training_data)
 
 		print(status, "Dense", end="\r")
-		train_dense_model(training_data)
+		train_model(NN_dense(), training_data)
 
 		print(status, "Split", end="\r")
-		train_split_model(training_data)
+		train_model(NN_split(), training_data)
 
 		# Records the weights and saves to file
 		if record_data:

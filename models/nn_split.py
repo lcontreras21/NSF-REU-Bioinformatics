@@ -14,7 +14,7 @@ class NN_split(nn.Module):
 		super(NN_split, self).__init__()
 		self.linears = nn.ModuleList(self.make_linears())
 		self.relu = nn.ReLU()
-		self.fc2 = nn.Linear(hidden_size - len(weights_to_test), 2)
+		self.fc2 = nn.Linear(hidden_size - len(weights_to_test), output_size)
 
 		self.load_starting_seed()
 
@@ -22,7 +22,8 @@ class NN_split(nn.Module):
 		out = self.fc1(input_vector) #custom fc1 compared to other models
 		out = self.relu(out)
 		out = self.fc2(out)
-		out = F.log_softmax(out, dim=1)
+		#out = F.log_softmax(out, dim=1)
+		out = torch.sigmoid(out)
 		return out
 
 	def fc1(self, input_vector):

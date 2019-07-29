@@ -4,6 +4,7 @@ from settings import *
 from models.process_data import *
 from train_models import *
 import numpy as np
+from copy import deepcopy
 
 class NN_dense(nn.Module):
 	def __init__(self, hidden_size=hidden_size):
@@ -20,7 +21,8 @@ class NN_dense(nn.Module):
 		out = self.fc1(input_vector)
 		out = self.relu(out)
 		out = self.fc2(out)
-		out = F.log_softmax(out, dim=1)
+		#out = F.log_softmax(out, dim=1)
+		out = torch.sigmoid(out)
 
 		self.mask()
 		return out

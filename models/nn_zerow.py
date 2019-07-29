@@ -23,7 +23,8 @@ class NN_zerow(nn.Module):
 		out = self.fc1(input_vector)
 		out = self.relu(out)
 		out = self.fc2(out)
-		out = F.log_softmax(out, dim=1)
+		#out = F.log_softmax(out, dim=1)
+		out = torch.sigmoid(out)
 
 		self.set_bias()
 		self.set_weights()

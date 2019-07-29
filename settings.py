@@ -17,7 +17,7 @@ else:
 
 
 # hyperparameters
-input_size, hidden_size, output_size = 4579, 50, 2
+input_size, hidden_size, output_size = 4579, 50, 1
 num_epochs = 1 
 learning_rate = 0.001
 
@@ -33,8 +33,8 @@ text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 stored_dict_locs = {name:"state_dicts/nn_" + name + ".pt" for name in ["Split", "Dense", "Zero-weights"]}
 
 # where to save run percentages if enabled
-text_path = "text_files/analysis/pos_neg_interaction/"
-image_path = "" #diagrams/pos_neg_interaction/"
+text_path = "text_files/analysis/sigmoid/"
+image_path = "diagrams/sigmoid/"
 modded = ""
 replace = "_modded"
 if test_behavior:

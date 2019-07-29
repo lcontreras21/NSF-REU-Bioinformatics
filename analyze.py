@@ -13,20 +13,17 @@ def load_output_data():
 	files = [fc2_weight_data_loc, fc2_bias_data_loc] 
 	weight_data = []
 	bias_data = []
-	with open(files[0], "r") as f:
-		for line in f:
-			line = line.split("\t-\t")
-			line[1] = line[1].replace("\n", "")
-			line[1] = line[1].split("\t")
-			line[1] = [eval(i) for i in line[1]]
-			weight_data.append(line)
-	with open(files[1], "r") as f:
-		for line in f:
-			line = line.split("\t-\t")
-			line[1] = line[1].replace("\n", "")
-			line[1] = line[1].split("\t")
-			line[1] = [float(i) for i in line[1]]
-			bias_data.append(line)
+	for index, file_i in enumerate(files):
+		with open(file_i, "r") as f:
+			for line in f:
+				line = line.split("\t-\t")
+				line[1] = line[1].replace("\n", "").split("\t")
+				if index == 0:
+					line[1] = [eval(i) for i in line[1]]
+					weight_data.append(line)
+				else:
+					line[1] = [float(i) for i in line[1]]
+					bias_data.append(line)
 	return weight_data, bias_data
 
 def normalized(dist):
@@ -87,27 +84,33 @@ def draw_distributions(n, normalize=False):
 
 def draw_graphs(dists, name, datastyle, n, which="both"):
 	model_names = ["Zero-weights", "Dense", "Split"] #column titles
-	node_names = ["Output node " + i for i in range(len(dists["Split"]))] #row titles
+	node_names = ["Output node " + str(i) for i in range(len(dists["Split"]))] #row titles
 	labels = {"top": "Highest", "low": "Lowest", 1:"Positive", 0: "Negative"}
 	key = {"Weights": ("top", "low"), "Biases": (1, 0)}
 	colors = {"top": "g", "low": "r", 1:"g", 0: "r"}
 
-	fig, axs = plt.subplots(2, 3, figsize=(12, 8), sharey=True, sharex=True)
+	fig, axs = plt.subplots(len(node_names), 3, figsize=(12, 8), sharey=True, sharex=True)
 	fig.suptitle(name + " Distribution of Positive and Negative " + datastyle + " for each output node")
 	
 	# Annotating row and columns
 	pad = 5
-	for ax, col in zip(axs[0], model_names):
+	cols = axs
+	rows = [axs[0]]
+	if len(axs.shape) > 1:
+		cols = axs[0]
+		rows = axs[:,0]
+	for ax, col in zip(cols, model_names):
 		ax.annotate(col, xy=(0.5, 1), xytext=(0, pad),
 			xycoords="axes fraction", textcoords="offset points", 
 			size="large", ha="center", va="baseline")
-	for ax, row in zip(axs[:,0], node_names):
+	for ax, row in zip(rows, node_names):
 		ax.annotate(row, xy=(0, 0.5), xytext=(-ax.yaxis.labelpad - pad, 0),
 				xycoords=ax.yaxis.label, textcoords="offset points",
 				size="large", ha="right", va="center")
-		#fig.tight_layout()
-	fig.subplots_adjust(left=0.15, top=0.90)
 
+	fig.subplots_adjust(left=0.15, top=0.90)
+	if len(axs.shape) == 1:
+		axs = [axs]
 	for node, row in enumerate(axs):
 		for index, ax in enumerate(row):
 			ind = np.arange(2)
@@ -125,7 +128,7 @@ def draw_graphs(dists, name, datastyle, n, which="both"):
 				vals = dists[model_names[index]][node][which]
 				bar = ax.bar(ind, vals, width, label=labels[which], color=colors[which])
 	axs[0][0].legend()
-	plt.savefig("diagrams/fc2_data/"+ datastyle+ "_" + str(which) + "_" + str(n) + ".pdf")
+	plt.savefig(image_path + datastyle+ "_" + str(which) + "_" + str(n) + ".pdf")
 
 
 def print_percentages(names=["Zero-weights", "Dense", "Split"]):
@@ -187,22 +190,33 @@ def weight_statistics():
 	for iteration in weight_data:
 		model_name, node_data = iteration[0], iteration[1]
 		for output_index, hidden_node_data in enumerate(node_data):
-			#print(max(hidden_node_data), min(hidden_node_data))
 			for hidden_index, hidden_node in enumerate(hidden_node_data):
 				if hidden_node > 0:
 					node_stats[model_name][output_index][hidden_index][1] += 1
 				else:
 					node_stats[model_name][output_index][hidden_index][0] += 1
-				if hidden_node > 0.2:
+				if hidden_node > 0.1:
 					node_stats[model_name][output_index][hidden_index][3] += 1
-				elif hidden_node < -0.2:
+				elif hidden_node < -0.1:
 					node_stats[model_name][output_index][hidden_index][2] += 1
-	print("Split | neg | pos | < -0.2 | > 0.2 ")
+	print("Split | neg | pos | < -0.1 | > 0.1 ")
 	pprint(node_stats["Split"])
-	print("Zero-weights | neg | pos | < -0.2 | > 0.2" )
+	print("Zero-weights | neg | pos | < -0.1 | > 0.1" )
 	pprint(node_stats["Zero-weights"])
 
+	'''	
+	for model_name in model_names:
+		for output_index in [0]:
+			for hidden_index in range(50):
+				node_data = node_stats[model_name][output_index][hidden_index][2:]
+				max_index = np.argmax(node_data)
+				min_index = np.argmin(node_data)
+				percent = node_data[min_index] / node_data[max_index]
+				if percent > 0.40 and model_name != "Dense":
+					print(model_name, output_index, hidden_index, node_data)
+	'''
 if __name__ == "__main__":
 	#build_distributions(3, normalize=False, output=True)
 	#draw_distributions(3, normalize=False)
 	weight_statistics()
+

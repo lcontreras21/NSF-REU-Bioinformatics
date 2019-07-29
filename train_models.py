@@ -26,7 +26,8 @@ def train_model(model, training_data):
 			learning_rate, "learning rate.")
 
 	model = model.train()
-	loss_function = nn.CrossEntropyLoss()
+	#loss_function = nn.CrossEntropyLoss()
+	loss_function = nn.BCELoss()
 	optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate)
 
 	# train the model
@@ -60,6 +61,7 @@ def train_model(model, training_data):
 if __name__ == "__main__":
 	training_data = load_data("train")
 	debug = True
-	models = [NN_dense(), NN_split(), NN_zerow()]
+	#models = [NN_dense(), NN_split(), NN_zerow()]
+	models = [NN_dense()]
 	for model in models:
 		train_model(model, training_data)
