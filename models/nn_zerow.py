@@ -16,22 +16,18 @@ class NN_zerow(nn.Module):
 		self.fc2 = nn.Linear(hidden_size, output_size)
 		
 		self.load_starting_seed()
-		if len(weights_to_test) != 0:
-			self.make_mask()
-			self.mask()
+		self.make_mask()
+		self.mask()
 	
 	def forward(self, input_vector):
 		out = self.fc1(input_vector)
 		out = self.relu(out)
 		out = self.fc2(out)
-		#out = F.log_softmax(out, dim=1)
 		out = torch.sigmoid(out)
 
-		if len(weights_to_test) != 0:
-			self.mask()
 		return out
 
-	def make_masks(self):
+	def make_mask(self):
 		gene_group_indicies = read_indicies()
 		mask = np.array([[0] * input_size] * len(gene_group_indicies))
 		for i, gene_group in enumerate(gene_group_indicies):
@@ -39,14 +35,14 @@ class NN_zerow(nn.Module):
 				gene_group = []
 			mask[i][gene_group] = 1
 		mask = torch.FloatTensor(mask)
-		self.mask = mask
+		self.weight_mask = mask
 
 		mask = np.array([1] * hidden_size)
 		mask[weights_to_test] = 0
 		self.bias_mask = torch.FloatTensor(mask)
 
 	def load_starting_seed(self):
-		self.fc1.weight.data = get_starting_seed()
+		self.fc1.weight.data, self.fc2.weight.data = get_starting_seed()
 
 	def mask(self):
 		self.fc1.weight.data *= self.weight_mask

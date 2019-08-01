@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 from pprint import pprint
 
 def load_output_data():
+	#file_dir = "text_files/analysis/swapped/"
+	#fc2_weight_data_loc = file_dir + "fc2_weights.txt"
+	#fc2_bias_data_loc = file_dir + "fc2_bias.txt"
 	files = [fc2_weight_data_loc, fc2_bias_data_loc] 
 	weight_data = []
 	bias_data = []
@@ -66,7 +69,7 @@ def build_distributions(n, normalize=False, output=False):
 		norm_bias = deepcopy(bias_dists)
 		norm_weight = deepcopy(weight_dists)
 		for model_name in model_names:
-			for node in range(2):
+			for node in range(len(weight_dists["Split"])):
 				norm_bias[model_name][node] = normalized(norm_bias[model_name][node])
 				for pos_neg in ["top", "low"]:
 					norm_weight[model_name][node][pos_neg] = normalized(norm_weight[model_name][node][pos_neg])
@@ -152,28 +155,6 @@ def print_percentages(names=["Zero-weights", "Dense", "Split"]):
 		percents[model] = ["{0:.9f}".format(percents[model][i] / total) for i in range(3)]
 		print("{0: <14}".format(str(model)), *percents[model], sep="\t")
 		
-# Probably don't need this function but it's good to have and use
-def verify_removed_weights():
-	if test_behavior:
-		processed_data = process_data()
-		# only interested in the main files, not overlap
-		# that data is at first and third index
-		datasets = [processed_data[1], processed_data[3]]
-		names = ["weights", "biases"]
-		# check if any of the weights_to_test are in there
-		count = 0
-		for i, dataset in enumerate(datasets):
-			for ii, (model_name, big_weights) in enumerate(dataset):
-				error = names[i] + " " + model_name + " " + str(ii) + "\n"
-				mistakes = [weight for weight in weights_to_test if weight in big_weights and model_name != "dense"]
-				if len(mistakes) != 0:
-					print(error.join([str(x) for x in mistakes]))
-				count += len(mistakes)
-		if count == 0:
-			print("Weights were properly removed")
-	else:
-		print("No need to test important weights. Make sure this is intentional.")
-
 # Check how often each hallmark node is positive and negative for the output
 def weight_statistics(cutoff=0.3):
 	weight_data, bias_data = load_output_data()
@@ -181,11 +162,11 @@ def weight_statistics(cutoff=0.3):
 	# {track each model
 	#	{track each output node
 	#		{track each hidden node
-	#			track how many times that hidden node was positive or negative
+	#			track how many times that hidden node was [neg, pos, <-cutoff, >cutoff, neg_weight_sum, pos_weight_sum]
 	node_stats = {
 			model_name: {
 				output_index:{
-					hidden_index:np.zeros(4, dtype=int) 
+					hidden_index:np.zeros(8, dtype=float) 
 					for hidden_index in range(len(weight_data[0][1][0]))} 
 				for output_index in range(len(weight_data[0][1]))} 
 			for model_name in model_names}
@@ -194,30 +175,74 @@ def weight_statistics(cutoff=0.3):
 		model_name, node_data = iteration[0], iteration[1]
 		for output_index, hidden_node_data in enumerate(node_data):
 			for hidden_index, hidden_node in enumerate(hidden_node_data):
+				current_data = node_stats[model_name][output_index][hidden_index]
 				if hidden_node > 0:
-					node_stats[model_name][output_index][hidden_index][1] += 1
-				else:
-					node_stats[model_name][output_index][hidden_index][0] += 1
-				if hidden_node > 0.1:
-					node_stats[model_name][output_index][hidden_index][3] += 1
-				elif hidden_node < -0.1:
-					node_stats[model_name][output_index][hidden_index][2] += 1
-	#print("Split | neg | pos | < -0.1 | > 0.1 ")
+					current_data[1] += 1
+					current_data[5] += hidden_node
+					if hidden_node > cutoff:
+						current_data[3] += 1
+						current_data[7] += hidden_node
+				elif hidden_node < 0:
+					current_data[0] += 1
+					current_data[4] += hidden_node
+					if hidden_node < -cutoff:
+						current_data[2] += 1
+						current_data[6] += hidden_node
+
+	#print("Split | neg | pos | <", "-" + str(cutoff),  "| >", cutoff)
 	#pprint(node_stats["Split"])
-	#print("Zero-weights | neg | pos | < -0.1 | > 0.1" )
+	#print("Zero-weights | neg | pos | <", "-" + str(cutoff), "| >", cutoff )
 	#pprint(node_stats["Zero-weights"])
 
+	special_nodes = []
 	for model_name in ["Zero-weights", "Split"]:
 		for output_index in [0]:
 			for hidden_index in range(50):
-				node_data = node_stats[model_name][output_index][hidden_index][2:]
-				max_index = int(np.argmax(node_data))
-				min_index = int(np.argmin(node_data))
-				percent = node_data[min_index] / node_data[max_index]
-				if percent > cutoff and model_name != "Dense":
-					print(model_name, output_index, hidden_index, node_data)
+				# node_data = [neg, pos, < neg cutoff, > cutoff]
+				node_data = node_stats[model_name][output_index][hidden_index]
+				crit_a = node_data[1] / node_data[0]
+				crit_b = node_data[3] / node_data[1]
+				crit_c = node_data[2] 
+				pos_weight_avg = "{:.3f}".format(node_data[5] / node_data[1])
+				neg_weight_avg = "{:.3f}".format(node_data[4] / node_data[0])
+				pos_c_avg = "{:.3f}".format(node_data[7] / node_data[3])
+				neg_c_avg = "{:.3f}".format(node_data[6] / node_data[2])
+				if neg_c_avg == "nan": neg_c_avg = "-0.000" 
+				# avg values are 2.2569, 0.833, 9.8
+				if crit_a >= 1.875 and crit_b >= 0.755 and crit_c <= 7:
+					print("{0:12}".format(model_name), "{0:2}".format(hidden_index), 
+							node_data[:-4].astype(int), 
+							neg_weight_avg, pos_weight_avg,
+							neg_c_avg, pos_c_avg)
+					special_nodes.append(hidden_index)
+					pass
+	with open(text_gene_groups, "r") as f:
+		for i, line in enumerate(f):
+			if i in special_nodes:
+				print(i, line.split()[0])
+				pass
+	print("special nodes", len(special_nodes))
+
+def important_weights(n):
+	weight_dists, bias_dists = build_distributions(5, normalize=False)
+	split_dist_top = weight_dists["Split"][0]["top"].tolist()
+	split_dist_low = weight_dists["Split"][0]["low"].tolist()
+	sorted_top = sorted(enumerate(split_dist_top), key=itemgetter(1))[-n:]
+	sorted_top = list(list(zip(*sorted_top))[0])
+	
+	sorted_low = sorted(enumerate(split_dist_low), key=itemgetter(1))[-n:]
+	sorted_low = list(list(zip(*sorted_low))[0])
+
+	print("top", sorted_top)
+	print("low", sorted_low)
+
 if __name__ == "__main__":
 	#build_distributions(5, normalize=False, output=False)
-	#draw_distributions(3, normalize=False)
-	weight_statistics(cutoff=0.8)
+	#draw_distributions(5, normalize=True)
+	weight_statistics(cutoff=0.15)
+	#important_weights(5)
+	pass
+
+
+
 

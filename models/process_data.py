@@ -28,7 +28,7 @@ def load_data(mode):
 
 # to be used for determining output of NN,
 # essentially our sigmoid function but other option is possible
-label_to_ix = {"Tumor": [0], "Normal": [1]}
+label_to_ix = {"Tumor": [1], "Normal": [0]}
 def make_expected(label, label_to_ix):
 	return torch.FloatTensor([label_to_ix[label]])
 
@@ -85,15 +85,20 @@ def read_indicies():
 	return gene_indicies
 
 def set_starting_seed(hidden_size=hidden_size):
-	test_layer = nn.Linear(input_size, hidden_size)
-	test_layer.weight.data.normal_(0.0, 1/(input_size**(0.5)))
+	input_layer = nn.Linear(input_size, hidden_size)
+	input_layer.weight.data.normal_(0.0, 1/(input_size**(0.5)))
+
+	output_layer = nn.Linear(hidden_size, output_size)
+	output_layer.weight.data.normal_(0.0, 1/(hidden_size**(0.5)))
 	with open(starting_seed_loc, "wb") as f:
-		pickle.dump(test_layer.weight.data, f) 
+		pickle.dump(input_layer.weight.data, f) 
+		pickle.dump(output_layer.weight.data, f)
 
 def get_starting_seed():
 	with open(starting_seed_loc, "rb") as f:
-		starting_seed = pickle.load(f)
-	return starting_seed
+		input_seed = pickle.load(f)
+		output_seed = pickle.load(f)
+	return input_seed, output_seed
 
 
 # collect information on the heaviest weights that were removed
@@ -107,6 +112,7 @@ def weight_info(interesting_weights=weights_to_test):
 		for i in info:
 			print(i)
 
+# finds the number of unique genes in each gene group
 def gene_groups_info():
 	f = open(text_gene_groups, "r")
 	info = []

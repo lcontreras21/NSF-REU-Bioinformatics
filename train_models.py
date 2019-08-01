@@ -53,6 +53,7 @@ def train_model(model, training_data):
 			loss = loss_function(output, expected)
 			loss.backward()
 			optimizer.step()
+			model.mask()
 
 	if debug:
 		print("\nSaving the model to file")
@@ -64,7 +65,8 @@ def train_model(model, training_data):
 if __name__ == "__main__":
 	training_data = load_data("train")
 	debug = True
-	#models = [NN_dense(), NN_split(), NN_zerow()]
-	models = [NN_split()]
-	for model in models:
-		train_model(model, training_data)
+	train_model(NN_split(), training_data)
+	#x = torch.load(stored_dict_locs["Dense"])
+	#y = x["fc1.weight"]
+	#print((y != 0).sum(dim=1))
+

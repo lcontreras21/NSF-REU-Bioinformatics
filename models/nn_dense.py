@@ -15,26 +15,23 @@ class NN_dense(nn.Module):
 		
 		self.hidden_size = hidden_size
 		self.load_starting_seed()
-		if len(weights_to_test) != 0:
-			self.make_mask()
-			self.mask()
+		self.make_mask()
+		self.mask()
 
 	def forward(self, input_vector):
 		out = self.fc1(input_vector)
 		out = self.relu(out)
 		out = self.fc2(out)
-		#out = F.log_softmax(out, dim=1)
 		out = torch.sigmoid(out)
 
-		if len(weights_to_test) != 0:
-			self.mask()
+		self.mask()
 		return out
 	
 	def __str__(self):
 		return "Dense"
 	
 	def load_starting_seed(self):
-		self.fc1.weight.data = get_starting_seed()
+		self.fc1.weight.data, self.fc2.weight.data = get_starting_seed()
 
 	def mask(self):
 		self.fc1.bias.data *= self.bias_mask

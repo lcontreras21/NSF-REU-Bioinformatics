@@ -35,9 +35,9 @@ class NN_split(nn.Module):
 		return hidden
 	
 	def make_linears(self):
-		self.gene_group_indicies, fc = [], []
+		fc = []
 		self.gene_group_indicies = read_indicies()
-		for i, gene_group in enumerate(gene_group_indicies):
+		for i, gene_group in enumerate(self.gene_group_indicies):
 			if test_behavior and i in weights_to_test:
 				fc.append(nn.Linear(1,1))
 				fc[-1].weight = nn.Parameter(torch.FloatTensor([0]), requires_grad=False)
@@ -59,11 +59,13 @@ class NN_split(nn.Module):
 		return split
 
 	def load_starting_seed(self):
-		seed = get_starting_seed()
+		seed, self.fc2.weight.data = get_starting_seed()
 		split_seed = [i.unsqueeze(0) for i in self.split_data(seed)]
 		for i, layer in enumerate(self.linears):
 			self.linears[i].weight.data = split_seed[i]
 
+	def mask(self):
+		pass
 
 	def __str__(self):
 		return "Split"
