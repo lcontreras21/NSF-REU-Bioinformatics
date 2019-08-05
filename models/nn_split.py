@@ -59,7 +59,8 @@ class NN_split(nn.Module):
 		return split
 
 	def load_starting_seed(self):
-		seed, self.fc2.weight.data = get_starting_seed()
+		#seed, self.fc2.weight.data = get_starting_seed()
+		seed, x= get_starting_seed()
 		split_seed = [i.unsqueeze(0) for i in self.split_data(seed)]
 		for i, layer in enumerate(self.linears):
 			self.linears[i].weight.data = split_seed[i]

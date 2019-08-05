@@ -53,7 +53,8 @@ def collect_weights():
 
 def process_gene_weights(nodes):
 	model_names = ["Dense", "Split", "Zero-weights"]
-	model_weight_data = {model_name:[] for model_name in model_names}
+	model_weights = {model_name:[] for model_name in model_names}
+	fc1_gene_weights_loc = "text_files/analysis/swapped/fc1_gene_weights.pickle"
 	with open(fc1_gene_weights_loc, "rb") as f:
 		try:
 			while True:
@@ -63,18 +64,19 @@ def process_gene_weights(nodes):
 					desired_groups = list(itemgetter(*nodes)(gene_weights)) # keeps in order of nodes
 				else:
 					desired_groups = gene_weights[nodes] # keeps in order of nodes
-				model_weight_data[name].append(desired_groups)
+				model_weights[name].append(desired_groups)
 		except EOFError:
 			pass
-	model_node_data = {model_name:{node: [] for node in nodes} for model_name in model_names}
-	for model in model_names:
-		weight_data = model_weight_data[model]
-		for node_datasets in weight_data:
-			for i, dataset in enumerate(node_datasets):
-				index = i % len(nodes)
-				model_node_data[model][nodes[index]].append(node_datasets[index])
-	return model_node_data
+	node_data = {model_name:{node: [] for node in nodes} for model_name in model_names}
+	for model_name in model_names:
+		weight_iterations = model_weights[model_name]
+		for train_instance in weight_iterations:
+			for node, node_weights in list(zip(nodes, train_instance)):
+				node_data[model_name][node].append(node_weights)
+	return node_data
 
+
+# This is after summing to get the weight values for each hidden node
 def process_n_weights(n=5):
 	max_min_data = []
 	duplicates = []
@@ -147,4 +149,6 @@ def write_data(file_loc, datasets):
 			f.write(name + string + "\n") 
 
 if __name__ == "__main__":
-	collect_weights()
+	#collect_weights()
+	process_gene_weights([0,1,2,3])
+

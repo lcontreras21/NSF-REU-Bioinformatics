@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 from collect_weights import *
+from models.process_data import *
 
 def process_data():
 	wd, weights = process_n_weights(5)
@@ -62,7 +63,7 @@ def make_gene_distributions(datasets, data_type, normalized=False):
 					return dists
 
 # Three types of data: dense, split, zero-weights
-def draw_gene_graph(dists, title, save_location="diagrams/distribution.pdf"):
+def draw_gene_graph(dists, title, save_location):
 	# dists is list of numpy arrays with info [split, dense, zerow, d-p, d-s, p-s]i
 	names = ["Split Model", "Dense Model", "Zero-weights Model", 
 			"Dense-Zero Overlap", "Dense-Split Overlap", "Zero-Split Overlap"]
@@ -102,12 +103,61 @@ def draw_gene_graphs(which="both"):
 				data_style = data_style[:2]
 				for i, polarity_data in enumerate(data_style):
 					graph_name = "Top 5 " + polarity_names[i] + " " + data_type.capitalize()
-					save_name = image_path + data_type + "_" + polarity_names[i].lower() + name + modded + ".pdf"
+					save_name = image_path + data_type + "_" + polarity_names[i].lower() + name + ".pdf"
 					draw_gene_graph(polarity_data, graph_name, save_location=save_name)
 
+# Given the desired hallmark sets from analyze.py, go in depth and find details about individual genes.
 
-
+def input_analysis(nodes, cutoff=0.01):
+	model_node_data = process_gene_weights(nodes)
+	gene_indicies = read_indicies()
+	# model_node_data is a dict of each model to a dict of each node and its line of weights
+	# for each model
+	#	for each node (nodes will have different data lengths based on gene groups)
+	#		for each gene weight in the gene group, make sure to label with name too to keep track
+	#			keep track of neg, pos, avg neg, avg pos, <neg cutoff, > neg cutoff, neg avg cutoff, pos avg cutoff
+	gene_data = {model_name:
+					{hidden_node:
+						{gene_node:[0]*8 
+						for gene_node in range(len(gene_indicies[hidden_node]))} 
+					for hidden_node in nodes} 
+				for model_name in model_node_data}
+	
+	for model_name in model_node_data:
+		for hidden_node in model_node_data[model_name]:
+			for input_weights in model_node_data[model_name][hidden_node]:
+				if model_name != "Split":
+					input_weights = input_weights[gene_indicies[hidden_node]]
+				assert(len(input_weights) == len(gene_indicies[hidden_node]))
+				for index, gene_weight in enumerate(input_weights):
+					gene_weight = gene_weight.item()
+					node_data = gene_data[model_name][hidden_node][index]
+					if gene_weight > 0:
+						node_data[1] += 1
+						node_data[3] += gene_weight
+						if gene_weight > cutoff:
+							node_data[5] += 1
+							node_data[7] += gene_weight
+					elif gene_weight < 0:
+						node_data[0] += 1
+						node_data[2] += gene_weight
+						if gene_weight < -cutoff:
+							node_data[4] += 1
+							node_data[6] += gene_weight
+			node_data = gene_data[model_name][hidden_node]
+			for gene_node in node_data:
+				for i in [0, 1, 4, 5]:
+					try:
+						node_data[gene_node][i+2] /= node_data[gene_node][i]
+					except:
+						pass
+	for i in gene_data["Split"][9]:
+		print(i, gene_data["Split"][9][i])
+		x = gene_data["Split"][9][i][:4]
+		#print("{0:3}".format(i), "{:02}".format(x[0]), "{:02}".format(x[1]), "{:.3f}".format(x[2]), "{:.3f}".format(x[3]), sep="\t")
+	return gene_data	
 
 
 if __name__ == "__main__":
+	input_analysis([9], cutoff=0.05)
 	pass

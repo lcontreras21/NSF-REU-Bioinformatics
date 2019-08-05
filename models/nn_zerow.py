@@ -42,7 +42,8 @@ class NN_zerow(nn.Module):
 		self.bias_mask = torch.FloatTensor(mask)
 
 	def load_starting_seed(self):
-		self.fc1.weight.data, self.fc2.weight.data = get_starting_seed()
+		#self.fc1.weight.data, self.fc2.weight.data = get_starting_seed()
+		self.fc1.weight.data, x = get_starting_seed()
 
 	def mask(self):
 		self.fc1.weight.data *= self.weight_mask

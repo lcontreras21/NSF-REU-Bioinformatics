@@ -33,8 +33,8 @@ text_gene_groups = "text_files/h.all.v6.2.symbols.txt"
 stored_dict_locs = {name:"state_dicts/nn_" + name + ".pt" for name in ["Split", "Dense", "Zero-weights"]}
 
 # where to save run save and store various files if enabled
-text_path = "text_files/analysis/swapped/"
-image_path = "diagrams/swapped/"
+text_path = "text_files/analysis/swapped3/"
+image_path = "diagrams/swapped3/"
 
 percent_save_loc = text_path + "percentages.txt"
 fc1_weight_data_loc = text_path + "fc1_weights.txt"

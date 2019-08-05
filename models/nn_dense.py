@@ -31,7 +31,8 @@ class NN_dense(nn.Module):
 		return "Dense"
 	
 	def load_starting_seed(self):
-		self.fc1.weight.data, self.fc2.weight.data = get_starting_seed()
+		#self.fc1.weight.data, self.fc2.weight.data = get_starting_seed()
+		self.fc1.weight.data, x = get_starting_seed()
 
 	def mask(self):
 		self.fc1.bias.data *= self.bias_mask

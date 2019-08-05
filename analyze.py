@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 from pprint import pprint
 
 def load_output_data():
-	#file_dir = "text_files/analysis/swapped/"
-	#fc2_weight_data_loc = file_dir + "fc2_weights.txt"
-	#fc2_bias_data_loc = file_dir + "fc2_bias.txt"
+	file_dir = "text_files/analysis/swapped/"
+	fc2_weight_data_loc = file_dir + "fc2_weights.txt"
+	fc2_bias_data_loc = file_dir + "fc2_bias.txt"
 	files = [fc2_weight_data_loc, fc2_bias_data_loc] 
 	weight_data = []
 	bias_data = []
@@ -194,8 +194,8 @@ def weight_statistics(cutoff=0.3):
 	#print("Zero-weights | neg | pos | <", "-" + str(cutoff), "| >", cutoff )
 	#pprint(node_stats["Zero-weights"])
 
-	special_nodes = []
-	for model_name in ["Zero-weights", "Split"]:
+	special_nodes = {i:[] for i in ["Split"]} #["Zero-weights", "Split"]}
+	for model_name in ["Split"]: #["Zero-weights", "Split"]:
 		for output_index in [0]:
 			for hidden_index in range(50):
 				# node_data = [neg, pos, < neg cutoff, > cutoff]
@@ -209,19 +209,31 @@ def weight_statistics(cutoff=0.3):
 				neg_c_avg = "{:.3f}".format(node_data[6] / node_data[2])
 				if neg_c_avg == "nan": neg_c_avg = "-0.000" 
 				# avg values are 2.2569, 0.833, 9.8
-				if crit_a >= 1.875 and crit_b >= 0.755 and crit_c <= 7:
+				print(model_name, "{0:2}".format(hidden_index), "{:.3f}".format(crit_a), "{:.3f}".format(crit_b), "{:.3f}".format(crit_c))
+				# used before were 1.50, 0.75, and 5 but since I recollected data, numbers are different
+				if crit_a >= 2.25 and crit_b >= 0.80 and crit_c <= 10:
+					special_nodes[model_name].append(hidden_index)
+					'''
 					print("{0:12}".format(model_name), "{0:2}".format(hidden_index), 
 							node_data[:-4].astype(int), 
 							neg_weight_avg, pos_weight_avg,
 							neg_c_avg, pos_c_avg)
-					special_nodes.append(hidden_index)
+					'''
 					pass
-	with open(text_gene_groups, "r") as f:
-		for i, line in enumerate(f):
-			if i in special_nodes:
-				print(i, line.split()[0])
-				pass
-	print("special nodes", len(special_nodes))
+	print("\n")
+	for x in special_nodes:
+		z = special_nodes[x]
+		print(x)
+		with open(text_gene_groups, "r") as f:
+			for i, line in enumerate(f):
+				node_data = node_stats[x][0][i]
+				pos_c_avg = "{:.3f}".format(node_data[7] / node_data[3])
+				neg_c_avg = "{:.3f}".format(node_data[6] / node_data[2])
+				name = line.split()[0]
+				if i in z:
+					print("{0:2}".format(i), "{:40}".format(name), neg_c_avg, pos_c_avg)
+					pass
+		print(len(z))
 
 def important_weights(n):
 	weight_dists, bias_dists = build_distributions(5, normalize=False)
