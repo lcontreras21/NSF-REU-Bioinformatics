@@ -41,8 +41,9 @@ def group_vertices(model):
 	
 	
 	vertices_output = []
-	vertices_output += [(i, "Tumor", 1) for i in range(len(gene_groups))]
-	vertices_output += [(i, "Normal", 1) for i in range(len(gene_groups))]
+	#vertices_output += [(i, "Tumor", 1) for i in range(len(gene_groups))]
+	#vertices_output += [(i, "Normal", 1) for i in range(len(gene_groups))]
+	vertices_output += [(i, "Output Node", 1) for i in range(len(gene_groups))]
 	return vertices_input, vertices_output
 
 
@@ -53,8 +54,9 @@ def position():
 	for group in range(len(gene_groups)):
 		scaling_ratio = len(gene_names) / len(gene_groups)
 		pos[group] = np.array([0, len(gene_names) - (2 * scaling_ratio * (group + 1))])
-	pos["Tumor"] = np.array([9, int(len(gene_names) * (2/3))])
-	pos["Normal"] = np.array([9, -int(len(gene_names) * (2/3))])
+	#pos["Tumor"] = np.array([9, int(len(gene_names) * (2/3))])
+	#pos["Normal"] = np.array([9, -int(len(gene_names) * (2/3))])
+	pos["Output Node"] = np.array([9, 0])
 	return pos
 
 def network_graph(model):
@@ -97,7 +99,8 @@ def network_graph(model):
 		node_shape='h',
 		alpha=1)
 	nx.draw_networkx_nodes(G,
-		nodelist=["Tumor", "Normal"],
+			#nodelist=["Tumor", "Normal"],
+		nodelist=["Output Node"],
 		pos=pos,
 		node_size=300,
 		node_shape='8',
@@ -133,7 +136,8 @@ def network_graph(model):
 		alpha=0.25)
 	'''
 	print("Saving to file","diagrams/" + model + ".pdf", flush=True)
-	plt.savefig("diagrams/graphs/" + model + ".pdf")
+	#plt.savefig("diagrams/graphs/" + model + ".pdf")
+	plt.savefig("test.pdf")
 	plt.close(model)
 	print("Done", flush=True)
 	print("Time to draw model:", timedelta(seconds=time.monotonic() - time_model), flush=True)
@@ -167,9 +171,8 @@ if __name__ == "__main__":
 	
 	network_graph("split")
 	print()
-	network_graph("zero")
-	print()
-	network_graph("dense")
-	print()
+	#network_graph("zero")
+	#print()
+	#network_graph("dense")
+	#print()
 	print("Time Total:", timedelta(seconds=time.monotonic() - start_time), flush=True)
-	print()

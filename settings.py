@@ -1,4 +1,4 @@
-# Store settings, parameters, and files to use here so 
+# Stor settings, parameters, and files to use here so 
 # Don't have to change multiple things in the model files
 # data is either full, or subset
 # mode is train, changed to test in testing_models.py file

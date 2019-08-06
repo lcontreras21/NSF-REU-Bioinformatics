@@ -227,11 +227,13 @@ def weight_statistics(cutoff=0.3):
 		with open(text_gene_groups, "r") as f:
 			for i, line in enumerate(f):
 				node_data = node_stats[x][0][i]
+				if 0 in node_data:
+					continue
 				pos_c_avg = "{:.3f}".format(node_data[7] / node_data[3])
 				neg_c_avg = "{:.3f}".format(node_data[6] / node_data[2])
 				name = line.split()[0]
 				if i in z:
-					print("{0:2}".format(i), "{:40}".format(name), neg_c_avg, pos_c_avg)
+					print("{0:2}".format(i), "{:40}".format(name.replace("HALLMARK_", "")), neg_c_avg, pos_c_avg)
 					pass
 		print(len(z))
 

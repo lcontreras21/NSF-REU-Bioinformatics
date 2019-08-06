@@ -108,7 +108,7 @@ def draw_gene_graphs(which="both"):
 
 # Given the desired hallmark sets from analyze.py, go in depth and find details about individual genes.
 
-def input_analysis(nodes, cutoff=0.01):
+def input_analysis(nodes, cutoff=0.06):
 	model_node_data = process_gene_weights(nodes)
 	gene_indicies = read_indicies()
 	# model_node_data is a dict of each model to a dict of each node and its line of weights
@@ -120,9 +120,10 @@ def input_analysis(nodes, cutoff=0.01):
 					{hidden_node:
 						{gene_node:[0]*8 
 						for gene_node in range(len(gene_indicies[hidden_node]))} 
-					for hidden_node in nodes} 
-				for model_name in model_node_data}
+						for hidden_node in nodes} 
+					for model_name in model_node_data}
 	
+	# avg pos and negative weight are around 0.063
 	for model_name in model_node_data:
 		for hidden_node in model_node_data[model_name]:
 			for input_weights in model_node_data[model_name][hidden_node]:
@@ -134,30 +135,42 @@ def input_analysis(nodes, cutoff=0.01):
 					node_data = gene_data[model_name][hidden_node][index]
 					if gene_weight > 0:
 						node_data[1] += 1
-						node_data[3] += gene_weight
+						node_data[5] += gene_weight
 						if gene_weight > cutoff:
-							node_data[5] += 1
+							node_data[3] += 1
 							node_data[7] += gene_weight
 					elif gene_weight < 0:
 						node_data[0] += 1
-						node_data[2] += gene_weight
+						node_data[4] += gene_weight
 						if gene_weight < -cutoff:
-							node_data[4] += 1
+							node_data[2] += 1
 							node_data[6] += gene_weight
 			node_data = gene_data[model_name][hidden_node]
 			for gene_node in node_data:
-				for i in [0, 1, 4, 5]:
+				for i in range(3):
 					try:
-						node_data[gene_node][i+2] /= node_data[gene_node][i]
+						node_data[gene_node][i+4] /= node_data[gene_node][i]
 					except:
 						pass
-	for i in gene_data["Split"][9]:
-		print(i, gene_data["Split"][9][i])
-		x = gene_data["Split"][9][i][:4]
-		#print("{0:3}".format(i), "{:02}".format(x[0]), "{:02}".format(x[1]), "{:.3f}".format(x[2]), "{:.3f}".format(x[3]), sep="\t")
 	return gene_data	
 
+def crit_analysis(node, cutoff=0.06):
+	gene_data = input_analysis(node, cutoff)
+	gene_names = import_gene_groups()
 
+	count = 0
+	for model_name in ["Split"]:
+		for hidden_node in gene_data[model_name]:
+			count = 0
+			for gene_node in gene_data[model_name][hidden_node]:
+				node_data = gene_data[model_name][hidden_node][gene_node]
+				node_names = gene_names[hidden_node]
+				x = node_data[2] + node_data[3]
+				if x > 80:
+					count += 1
+					print(node_names[gene_node], *node_data[:4], sep="\t")
+	print(count)
 if __name__ == "__main__":
-	input_analysis([9], cutoff=0.05)
+	crit_analysis([9], cutoff=0.05)
+	#input_analysis([9], cutoff=0.01)
 	pass
