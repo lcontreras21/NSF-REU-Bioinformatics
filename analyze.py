@@ -1,6 +1,7 @@
 '''
 Analyze weights from the hidden layer to the output layer
 '''
+import sys
 from settings import *
 from collect_weights import * 
 from operator import itemgetter
@@ -156,7 +157,7 @@ def print_percentages(names=["Zero-weights", "Dense", "Split"]):
 		print("{0: <14}".format(str(model)), *percents[model], sep="\t")
 		
 # Check how often each hallmark node is positive and negative for the output
-def weight_statistics(cutoff=0.3):
+def build_weight_statistics(cutoff=0.3):
 	weight_data, bias_data = load_output_data()
 	model_names = ["Zero-weights", "Dense", "Split"]
 	# {track each model
@@ -188,75 +189,51 @@ def weight_statistics(cutoff=0.3):
 					if hidden_node < -cutoff:
 						current_data[2] += 1
 						current_data[6] += hidden_node
+	return node_stats
 
-	#print("Split | neg | pos | <", "-" + str(cutoff),  "| >", cutoff)
-	#pprint(node_stats["Split"])
-	#print("Zero-weights | neg | pos | <", "-" + str(cutoff), "| >", cutoff )
-	#pprint(node_stats["Zero-weights"])
+
+def weight_statistics(cutoff=0.3, set_crits=[2.25, 0.80, 10]):
+	node_stats = build_weight_statistics(cutoff=cutoff)
 
 	special_nodes = {i:[] for i in ["Split"]} #["Zero-weights", "Split"]}
 	for model_name in ["Split"]: #["Zero-weights", "Split"]:
-		for output_index in [0]:
+		print(model_name)
+		print("index", "Crit A", "Crit B", "Crit C", sep="\t")
+		for output_index in node_stats[model_name]:
 			for hidden_index in range(50):
 				# node_data = [neg, pos, < neg cutoff, > cutoff]
 				node_data = node_stats[model_name][output_index][hidden_index]
-				crit_a = node_data[1] / node_data[0]
-				crit_b = node_data[3] / node_data[1]
-				crit_c = node_data[2] 
-				pos_weight_avg = "{:.3f}".format(node_data[5] / node_data[1])
-				neg_weight_avg = "{:.3f}".format(node_data[4] / node_data[0])
-				pos_c_avg = "{:.3f}".format(node_data[7] / node_data[3])
-				neg_c_avg = "{:.3f}".format(node_data[6] / node_data[2])
-				if neg_c_avg == "nan": neg_c_avg = "-0.000" 
-				# avg values are 2.2569, 0.833, 9.8
-				print(model_name, "{0:2}".format(hidden_index), "{:.3f}".format(crit_a), "{:.3f}".format(crit_b), "{:.3f}".format(crit_c))
-				# used before were 1.50, 0.75, and 5 but since I recollected data, numbers are different
-				if crit_a >= 2.25 and crit_b >= 0.80 and crit_c <= 10:
+				crits = [node_data[1] / node_data[0], node_data[3] / node_data[1], node_data[2]]
+				avgs = ["{:.3f}".format(node_data[i+4] /node_data[i]) for i in range(4)] #[neg_avg, pos_avg, neg_cutoff_avg, pos_cutoff_avg
+
+				if avgs[2] == "nan": neg_c_avg = "-0.000" 
+				### avg crit values are 2.2569, 0.833, 9.8
+				
+				print(hidden_index, *["{:.3f}".format(i) for i in crits], sep="\t")
+				if crits[0] >= set_crits[0] and crits[1] >= set_crits[1] and crits[2] <= set_crits[2]:
 					special_nodes[model_name].append(hidden_index)
-					'''
-					print("{0:12}".format(model_name), "{0:2}".format(hidden_index), 
-							node_data[:-4].astype(int), 
-							neg_weight_avg, pos_weight_avg,
-							neg_c_avg, pos_c_avg)
-					'''
-					pass
+	
 	print("\n")
+	
 	for x in special_nodes:
 		z = special_nodes[x]
 		print(x)
+		print("index", "Gene process",*[""]*3, "Neg Avg Cutoff", "Pos Avg Cutoff", sep="\t")
 		with open(text_gene_groups, "r") as f:
 			for i, line in enumerate(f):
 				node_data = node_stats[x][0][i]
 				if 0 in node_data:
 					continue
-				pos_c_avg = "{:.3f}".format(node_data[7] / node_data[3])
-				neg_c_avg = "{:.3f}".format(node_data[6] / node_data[2])
+				avgs = ["{:.3f}".format(node_data[i+4] / node_data[i]) for i in [2, 3]]
 				name = line.split()[0]
 				if i in z:
-					print("{0:2}".format(i), "{:40}".format(name.replace("HALLMARK_", "")), neg_c_avg, pos_c_avg)
+					print("{0:2}".format(i), "{:40}".format(name.replace("HALLMARK_", "")), avgs[0], avgs[1], sep="\t")
 					pass
-		print(len(z))
-
-def important_weights(n):
-	weight_dists, bias_dists = build_distributions(5, normalize=False)
-	split_dist_top = weight_dists["Split"][0]["top"].tolist()
-	split_dist_low = weight_dists["Split"][0]["low"].tolist()
-	sorted_top = sorted(enumerate(split_dist_top), key=itemgetter(1))[-n:]
-	sorted_top = list(list(zip(*sorted_top))[0])
-	
-	sorted_low = sorted(enumerate(split_dist_low), key=itemgetter(1))[-n:]
-	sorted_low = list(list(zip(*sorted_low))[0])
-
-	print("top", sorted_top)
-	print("low", sorted_low)
+		print("Groups found:", len(z))
 
 if __name__ == "__main__":
-	#build_distributions(5, normalize=False, output=False)
-	#draw_distributions(5, normalize=True)
-	weight_statistics(cutoff=0.15)
-	#important_weights(5)
-	pass
-
-
-
-
+	try:
+		set_crits = list(map(float, sys.argv[1:]))
+	except:
+		set_crits = [2.25, 0.80, 10]
+	weight_statistics(cutoff=0.15, set_crits=set_crits)
