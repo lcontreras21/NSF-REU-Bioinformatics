@@ -163,10 +163,10 @@ def crit_analysis(node, cutoff=0.06):
 		for hidden_node in gene_data[model_name]:
 			count = 0
 			for gene_node in gene_data[model_name][hidden_node]:
-				node_data = gene_data[model_name][hidden_node][gene_node]
+				node_data = gene_data[model_name][hidden_node][gene_node][2:4]
 				node_names = gene_names[hidden_node]
-				x = node_data[2] + node_data[3]
-				if x > 80:
+				x = node_data[node_data.index(min(node_data))] / node_data[node_data.index(max(node_data))]
+				if x < 0.3:
 					count += 1
 					print(node_names[gene_node], *node_data[:4], sep="\t")
 	print(count)

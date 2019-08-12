@@ -39,7 +39,7 @@ def make_gene_vector(input_sample):
 	return vec.view(1, -1)
 
 # makes a dictionary for gene index to be able to connect nodes
-def gene_dict():
+def gene_dict(data=data):
 	text_data = "text_files/" + data + "_gene_names.txt"
 	with open(text_data, "r") as f:
 		gene_names = f.readline().split()

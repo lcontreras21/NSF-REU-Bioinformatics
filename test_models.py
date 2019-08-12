@@ -14,7 +14,7 @@ from models.nn_split import NN_split
 from models.nn_dense import NN_dense
 from settings import *
 
-def test_models(testing_data, models=[NN_dense(), NN_split(), NN_zerow()]):
+def test_models(testing_data, models):
 	start_time = time.monotonic()
 	for i, model in enumerate(models):
 		model.load_state_dict(torch.load(stored_dict_locs[str(model)]))
@@ -61,4 +61,4 @@ def test_models(testing_data, models=[NN_dense(), NN_split(), NN_zerow()]):
 if __name__ == "__main__":
 	testing_data = load_data("test")
 	debug = True
-	test_models(testing_data)	
+	test_models(testing_data, [NN_dense(), NN_split(), NN_zerow())	

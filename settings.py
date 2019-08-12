@@ -1,14 +1,12 @@
-# Stor settings, parameters, and files to use here so 
-# Don't have to change multiple things in the model files
-# data is either full, or subset
-# mode is train, changed to test in testing_models.py file
+# Store settings, parameters, and files to use here so 
+# don't have to change multiple things in the multiple files
 
-data = "subset"
-debug = False
-record_data = True
-test_behavior = False
-seed = True
-testing_parameters = False
+data = "subset" # either 'full' or 'subset'
+debug = False # set to True to display progress and other information
+record_data = True # set to True to store model data and percentages in text files
+test_behavior = False # set to True if some weight nodes need to be removed for experioments
+seed = True # set to True if all instantiations should have the same weight matrixes
+testing_parameters = False # set to True if the collected data should be erased after each session, helpful if testing different parameters and don't want overaccumulation 
 
 if test_behavior:
 	weights_to_test = [26, 27, 19, 34, 25, 3, 8, 13, 41]

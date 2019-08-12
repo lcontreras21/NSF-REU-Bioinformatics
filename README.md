@@ -8,13 +8,6 @@ In this project, the goal will be to leverage large omics databases and existing
 
 Outcome: The student will learn how to build a machine learning model to solve a key problem in cancer research. Many of the techniques and tools learned during this project can be applied to other machine learning projects. Ultimately, the student’s work will lead to the development of an important tool for the research community.
 
-## Installation
-It is necessary to install various items before the files can be run. These include:
-- For web scraping: bs4, requests
-- For the neural networks: pickle, torch, pytorch, tqdm
-- For plotting the networks: matplotlib, networkx, numpy
-- For all files: datetime, time, random, collections, copy
-
 ## Contents
 - Three models: a fully connected (dense) model; a partially connected (zero-weights) model; a sparsely connected (split) model. Each model uses function stored in the process\_data file. To train individual models, they must be ran from the main.py file, otherwise erros from import issues will come up. 
 - A settings file where various parameters can be configured. This is also where file locations for weights/biases, percentages, training and testing data, are loaded and/or saved. It can also be declared if the full or subset dataset is being used, if debugging needs to be turned on, or if certain weights need to be tested.
@@ -27,6 +20,39 @@ It is necessary to install various items before the files can be run. These incl
 - A plot file to visualize the neural networks. This will allow us to see the nodes and connections of the network and how the graphs differs between models.
 - In the preprocessing folder, there is a file to make subset datasets based on the gene groups, make training and testing data from the full dataset and from the subset dataset just created. It can also make other necessary files such as files containing the names of the genes in the full and subset datasets necessary for processing the data when training. 
 - Various sub-directories containing text files of unaltered data, training data, testing data, processed data, and the saved training weights of the models. 
+
+## Prerequisites and installation
+It is necessary to install various items before the files can be run. These include:
+- For web scraping: bs4, requests
+- For the neural networks: pickle, torch, pytorch, tqdm
+- For plotting the networks: matplotlib, numpy, networkx
+- For all files: datetime, time, random, collections, copy
+- For testing: fraction
+The necessary items to install are pickle, torch, pytorch, tqdm, matplotlib, numpy, datetime, random, time, collections, copy, fractions. 
+Go to http://software.broadinstitute.org/gsea/downloads.jsp, login using your email and download the gallmark gene sets, gene symbols file and save it as a text file under the /text\_files/ directory.
+Download the normal/tumor dataset and store it as a text file under the /text\_files/ directory.
+Download the gene\_pairs.pickle as their are various genes in the hallmark data base that use different names in the TCGA data. This file helps account for those differences. Save in the same place as the other two files. 
+
+## Usage
+All of these commands must be executed from the main directory.
+First, set up all of the text files that are used by running:
+```
+python3 main.py create_files
+```
+Then make sure all of the desired settings and file locations are ok in settings.py. Otherwise, change then there. Some of the settings are redundant or need to be changed since they were part of older experiments and are probably no longer needed.
+To collect data from train/testing the models multiple times, run: 
+```
+python3 main.py [iteration count]
+```
+Or, to just train all three models, run:
+```
+python3 train_models.py
+```
+And, to test the models, run:
+```
+python3 test_models.py
+```
+Note individually training and testing will display a progress bar.
 
 ## Background
 Part of the [SRI International REU program](https://www.sri.com/careers/research-experience-undergraduates-program).  

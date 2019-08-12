@@ -66,7 +66,5 @@ if __name__ == "__main__":
 	training_data = load_data("train")
 	debug = True
 	train_model(NN_split(), training_data)
-	#x = torch.load(stored_dict_locs["Dense"])
-	#y = x["fc1.weight"]
-	#print((y != 0).sum(dim=1))
-
+	train_model(NN_dense(), training_data)
+	train_model(NN_zerow(), training_data)

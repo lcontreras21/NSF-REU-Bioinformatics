@@ -3,15 +3,39 @@
 from models.nn_zerow import *
 from models.nn_dense import *
 from models.nn_split import *
-from models.process_data import set_starting_seed
-from preprocessing.make_subset_data import create_train_test_data 
 from test_models import *
+from models.process_data import set_starting_seed
+from other_py_files.make_subset_data import *
 from train_models import *
 from collect_weights import *
 from analyze import *
 import sys
 import time
 from datetime import timedelta
+
+def create_files():
+	print("Creating subset, train, test, and other files")
+	print("Estimated time to finish: 00:01:30")
+	start = time.monotonic()
+	# first need to create the subset data set from logged_scaled_rnaseq.txt
+	save_gene_names()
+	make_subset_dataset()
+
+	# then need to create gene_names files for subset and the full set
+	save_gene_names("subset_")
+
+	# create separate normal and tumor sets for subset and full set
+	norm_tum_sets()
+
+	# now we need to create the training and testing data for both sets
+	create_train_test_data()
+
+	# lastly create file for gene indicies and other files
+	save_indicies()
+	set_starting_seed()
+
+	end = time.monotonic()
+	print("Run time:", timedelta(seconds=end-start))
 
 def main(n):
 	presets = [debug, record_data, test_behavior, seed, data]
@@ -58,7 +82,7 @@ def main(n):
 			collect_weights()
 
 		# Tests the models and saves percentages to file
-		test_models(testing_data)
+		test_models(testing_data, [NN_zerow(), NN_dense(), NN_split()])
 	loop_time = time.monotonic()
 	print(" " * 50, end="\r")
 	print("\033[F-----Finished", n, "tests in", timedelta(seconds=loop_time - start_time))
@@ -83,5 +107,7 @@ def main(n):
 	
 
 if __name__ == "__main__":
-	main(sys.argv[1])
-	#reset_files()
+	if sys.argv[1] == "create_files":
+		create_files()
+	else:
+		main(sys.argv[1])
