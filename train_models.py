@@ -15,6 +15,7 @@ import time
 from datetime import timedelta
 import random
 from tqdm import tqdm
+import sys
 
 
 def train_model(model, training_data):
@@ -62,9 +63,20 @@ def train_model(model, training_data):
 	if debug:
 		print("Runtime:", timedelta(seconds=end_time - start_time), "\n")
 
-if __name__ == "__main__":
+def user_train_input():
 	training_data = load_data("train")
+	keys = {"split": NN_split(), "dense": NN_dense(), "zerow": NN_zerow()}
+	if sys.argv[1].lower() == "all" or len(sys.argv[1:]) == 0:
+		for i in keys:
+			train_model(keys[i], training_data)
+	elif len(sys.argv[1:]) >= 1:
+		for i in sys.argv[1:]:
+			if i.lower() not in keys:
+				print("Wrong model name:", i)
+				return
+		for i in sys.argv[1:]:
+			train_model(keys[i.lower()], training_data)
+
+if __name__ == "__main__":
 	debug = True
-	train_model(NN_split(), training_data)
-	train_model(NN_dense(), training_data)
-	train_model(NN_zerow(), training_data)
+	user_train_input()

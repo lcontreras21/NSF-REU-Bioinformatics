@@ -13,6 +13,7 @@ from models.nn_zerow import NN_zerow
 from models.nn_split import NN_split
 from models.nn_dense import NN_dense
 from settings import *
+import sys
 
 def test_models(testing_data, models):
 	start_time = time.monotonic()
@@ -58,7 +59,19 @@ def test_models(testing_data, models):
 	if debug:
 		print("\nRuntime:", timedelta(seconds=time.monotonic() - start_time))
 
-if __name__ == "__main__":
+def user_test_input():
 	testing_data = load_data("test")
+	keys = {"split": NN_split(), "dense": NN_dense(), "zerow": NN_zerow()}
+	if sys.argv[1].lower() == "all" or len(sys.argv[1:]) == 0:
+		test_models(testing_data, [NN_dense(), NN_split(), NN_zerow()])	
+	elif len(sys.argv[1:]) >= 1:
+		for i in sys.argv[1:]:
+			if i.lower() not in keys:
+				print("Wrong model name:", i)
+				return
+		test_models(testing_data, [keys[model] for model in sys.argv[1:]]) 
+
+
+if __name__ == "__main__":
 	debug = True
-	test_models(testing_data, [NN_dense(), NN_split(), NN_zerow())	
+	user_test_input()
