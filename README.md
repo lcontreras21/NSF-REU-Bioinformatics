@@ -28,7 +28,14 @@ It is necessary to install various items before the files can be run. These incl
 - For plotting the networks: matplotlib, numpy, networkx
 - For all files: datetime, time, random, collections, copy
 - For testing: fraction
+
 The required items to install are pickle, torch, pytorch, tqdm, matplotlib, numpy, datetime, random, time, collections, copy, fractions. 
+
+Install pytorch and torch with: 
+```
+pip3 install torch==1.2.0+cpu torchvision==0.4.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+```
+
 Go to http://software.broadinstitute.org/gsea/downloads.jsp, login using an email and download the Hallmark gene sets, gene symbols file and save it as a text file under the /text\_files/ directory.
 Download the normal/tumor dataset and store it as a text file under the /text\_files/ directory.
 Download the gene\_pairs.pickle as their are various genes in the hallmark data base that use different names in the TCGA data. This file helps account for those differences. Save in the same place as the other two files. 
@@ -46,11 +53,11 @@ python3 main.py [iteration count]
 ```
 Or, to just train all three models, run:
 ```
-python3 train_models.py
+python3 train_models.py ["all"] or any combination of ["split", "dense", "zerow"]
 ```
 And, to test the models, run:
 ```
-python3 test_models.py
+python3 test_models.py ["all"] or any combination of ["split", "dense", "zerow"]
 ```
 Note individually training and testing will display a progress bar.
 After collecting a large amount of data, to get gene group statistics run:
