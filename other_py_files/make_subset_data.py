@@ -15,17 +15,16 @@ def make_subset_dataset():
 
 	#getting indices from unique genes, it is sorted
 	gene_indices = get_gene_indicies(genes, genes_dict)
-	gene_indices = [0] + gene_indices + [len(gene_groups[0]) - 1]
 
 	f = open("text_files/logged_scaled_rnaseq.txt", "r")
 
 	# open new file for subset of data
 	g = open("text_files/subset_logged_scaled_rnaseq.txt", "w")
 	for line in f:
-		data = line.split()
-		data_used = data[1:-1]
+		sample = line.split()
+		data_used = sample[1:-1]
 		subset_data = [data_used[index] for index in gene_indices]
-		to_write = "\t".join([data[0]] + subset_data + [data[-1]])
+		to_write = "\t".join([sample[0]] + subset_data + [sample[-1]])
 		g.write(to_write+"\n")
 
 	f.close()

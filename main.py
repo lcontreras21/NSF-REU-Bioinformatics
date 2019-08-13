@@ -53,12 +53,12 @@ def main(n):
 		return
 	
 	start_time = time.monotonic()
-	
-	#create_train_test_data()
+
+	#print("Creating a new randomized subset of data for training and testing.")
+	create_train_test_data() # remove this function if randomized data isn't needed
 	save_indicies()
 	training_data = load_data("train")
 	testing_data = load_data("test")
-	
 	
 	print(" " * 50, end="\r")
 	set_starting_seed()	
@@ -95,16 +95,11 @@ def main(n):
 	print("\nPercentages from session")
 	print_percentages()
 
-	#if record_data:
-	#	print("\nDrawing distributions and saving to files under", image_path)
-	#	draw_graphs(which="both")
-
 	if testing_parameters:
 		reset_files()
 
 	end_time = time.monotonic()
 	print("\n-----Finished experiment in", timedelta(seconds=end_time - start_time))
-	
 
 if __name__ == "__main__":
 	if sys.argv[1] == "create_files":

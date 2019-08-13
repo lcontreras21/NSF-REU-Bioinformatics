@@ -236,4 +236,5 @@ if __name__ == "__main__":
 		set_crits = list(map(float, sys.argv[1:]))
 	except:
 		set_crits = [2.25, 0.80, 10]
+		print("The given crits were badly formatted.")
 	weight_statistics(cutoff=0.15, set_crits=set_crits)

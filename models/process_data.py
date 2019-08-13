@@ -65,7 +65,7 @@ def get_gene_indicies(gene_group, gene_indexes):
 				gene = alternate_names[gene]
 			indices += gene_indexes[gene]
 		except:
-			pass
+			pass # 5 missing genes
 	indices.sort()
 	return indices
 
@@ -76,6 +76,7 @@ def save_indicies():
 		for gene_group in gene_groups:
 			x = get_gene_indicies(gene_group, gene_indexer)
 			f.write("\t".join(list(map(str, x))) + "\n")
+
 def read_indicies():
 	gene_indicies = []
 	with open("text_files/gene_indicies.txt", "r") as f:

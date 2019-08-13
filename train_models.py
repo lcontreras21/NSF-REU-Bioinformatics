@@ -30,7 +30,6 @@ def train_model(model, training_data):
 			learning_rate, "learning rate.")
 
 	model = model.train()
-	#loss_function = nn.CrossEntropyLoss()
 	loss_function = nn.BCELoss()
 	optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate)
 

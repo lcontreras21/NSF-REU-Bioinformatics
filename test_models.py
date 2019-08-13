@@ -62,7 +62,9 @@ def test_models(testing_data, models):
 def user_test_input():
 	testing_data = load_data("test")
 	keys = {"split": NN_split(), "dense": NN_dense(), "zerow": NN_zerow()}
-	if sys.argv[1].lower() == "all" or len(sys.argv[1:]) == 0:
+	if len(sys.argv[1:]) == 0:
+		test_models(testing_data, [NN_dense(), NN_split(), NN_zerow()])	
+	elif sys.argv[1].lower() == "all":
 		test_models(testing_data, [NN_dense(), NN_split(), NN_zerow()])	
 	elif len(sys.argv[1:]) >= 1:
 		for i in sys.argv[1:]:

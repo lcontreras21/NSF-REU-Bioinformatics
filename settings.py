@@ -15,7 +15,7 @@ else:
 
 
 # hyperparameters
-input_size, hidden_size, output_size = 4579, 50, 1
+input_size, hidden_size, output_size = 4383, 50, 1
 num_epochs = 1 
 learning_rate = 0.001
 
