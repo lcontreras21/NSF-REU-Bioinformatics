@@ -44,6 +44,7 @@ Download the gene\_pairs.pickle as their are various genes in the hallmark data 
 
 ## Usage
 All of these commands must be executed from the main directory.
+
 First, set up all of the text files that are used by running:
 ```
 python3 main.py create_files
