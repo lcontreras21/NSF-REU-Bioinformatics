@@ -17,35 +17,41 @@ import sys
 
 def test_models(testing_data, models):
 	start_time = time.monotonic()
+
 	for i, model in enumerate(models):
 		model.load_state_dict(torch.load(stored_dict_locs[str(model)]))
+		
 		if debug: 
 			print("Testing accuracy of", model, "model using the", data, "dataset")
 		
 		model.eval()
+
 		with torch.no_grad():
-			keys = [1, 0, "total"]
 			vals = {1: [0, 0], 0: [0, 0], "total": [0, 0]}
+			
 			testing_size = len(testing_data)
+			
 			for i in tqdm(range(testing_size), disable=not debug):
 				instance, label = testing_data[i]
 				
 				gene_vec = make_gene_vector(instance)
 				expected = make_expected(label, label_to_ix)
 				outputs = model(gene_vec)
-				#_, predicted = torch.max(outputs.data, 1)
-				predicted = outputs.data.round()
+				predicted = outputs.data.round() # sigmoid puts value between 0-1, this selects normal or tumor
+
 				vals["total"][1] += 1
 				
 				vals[expected.item()][1] += 1 # Account for total pos or neg
 				if torch.equal(predicted, expected):
 					vals[expected.item()][0] += 1 # Account for true pos or neg
-					vals["total"][0] += 1
+					vals["total"][0] += 1 # Account for correctness
 				
 		# account for specificity and sensitivity here
+		keys = [1, 0, "total"]
 		stats = [float(Fraction(*vals[i])) for i in keys]
 		formatted = [["{:04}".format(i) for i in vals[key]] for key in keys]
 		name = ["Sensitivity", "Specificity", "Correctness"]
+
 		if debug:
 			for i in range(3):
 				print(name[i], "/".join(formatted[i]), "=", "{:04}".format(stats[i]))
@@ -64,14 +70,15 @@ def user_test_input():
 	keys = {"split": NN_split(), "dense": NN_dense(), "zerow": NN_zerow()}
 	if len(sys.argv[1:]) == 0:
 		test_models(testing_data, [NN_dense(), NN_split(), NN_zerow()])	
-	elif sys.argv[1].lower() == "all":
-		test_models(testing_data, [NN_dense(), NN_split(), NN_zerow()])	
 	elif len(sys.argv[1:]) >= 1:
-		for i in sys.argv[1:]:
-			if i.lower() not in keys:
-				print("Wrong model name:", i)
-				return
-		test_models(testing_data, [keys[model] for model in sys.argv[1:]]) 
+		if sys.argv[1] == "all":
+			test_models(testing_data, [NN_dense(), NN_split(), NN_zerow()])	
+		else:
+			for i in sys.argv[1:]:
+				if i.lower() not in keys:
+					raise ValueError("Wrong model name:", i)
+					return
+			test_models(testing_data, [keys[model] for model in sys.argv[1:]]) 
 
 
 if __name__ == "__main__":

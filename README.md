@@ -15,7 +15,8 @@ Outcome: The student will learn how to build a machine learning model to solve a
 - A test\_models file where each model's weight data is loaded and then and then used to test it. The sensitivity, specificity, and correctness of the model is then saved to a text file specified in the settings file.
 - A collect\_weights file where the weight matrixes for each model are stored for later analysis. They are stored as text files under the /text\_files/[Experiment name]/ directory. 
 - An analyze file where various analysis tools are stored. Here, the data stored in a text file from several runs is read, and then distributions of that data can be made to see how weight importance is distributed. Those distributions can then be plotted. The average sensitivity, specificity, and correctness can also be calculated here. 
-- Finally, a main file where everything is brought into one seamless process. After specifying settings, file locations, and save locations in the settings file, this file can be run with a command line argument of how many times it needs to train, test, and collect data. At the end, it will output the percentages of the runs.   
+- A gene\_analysis file for analyzing the individual genes. A lot of work remains in this file and it is mostly a mess. 
+- Finally, a main file where all of the above functions are brought into one seamless process. After specifying settings, file locations, and save locations in the settings file, this file can be run with a command line argument of how many times it needs to train, test, and collect data. At the end, it will output the percentages of the runs.   
 	- Contains another function that will create the text files needed to run the functions and other processes. More on that below in Usage. 
 - A gene scraper file to find alternate names for genes in a given gene group database. It will make a normal google search for the gene and more often, the first result is the correct gene name. It saves this and uses the information in other files.
 - A plot file to visualize the neural networks. This will allow us to see the nodes and connections of the network and how the graphs differ between models.
@@ -29,7 +30,7 @@ It is necessary to install various items before the files can be run. These incl
 - For all files: datetime, time, random, collections, copy
 - For testing: fraction
 
-The required items to install are pickle, torch, pytorch, tqdm, matplotlib, numpy, datetime, random, time, collections, copy, fractions. 
+The required items to install are pickle, torch, pytorch, tqdm, matplotlib, numpy, datetime, random, time, collections, copy, fractions. Besides torch and pytorch, all of these can be install with `pip install [package]`
 
 Install pytorch and torch with: 
 ```
@@ -51,17 +52,17 @@ python3 main.py create_files
 ```
 Then make sure all of the desired settings and file locations are ok in settings.py. Otherwise, change then there. Some of the settings are redundant or need to be changed since they were part of older experiments and are probably no longer needed.
 
-To collect data from train/testing the models multiple times, run: 
+To collect data from train/testing the models, or specified models, multiple times, run: 
 ```
-python3 main.py [iteration count]
+python3 main.py [iteration count] ["all or leave blank for all three] or any combination of ["split", "dense", "zerow"]
 ```
 Or, to just train all three models, run:
 ```
-python3 train_models.py ["all"] or any combination of ["split", "dense", "zerow"]
+python3 train_models.py ["all" or leave blank for all three] or any combination of ["split", "dense", "zerow"]
 ```
 And, to test the models, run:
 ```
-python3 test_models.py ["all"] or any combination of ["split", "dense", "zerow"]
+python3 test_models.py ["all" or leave blank for all three] or any combination of ["split", "dense", "zerow"]
 ```
 Note individually training and testing will display a progress bar.
 After collecting a large amount of data, to get gene group statistics run:

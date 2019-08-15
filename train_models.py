@@ -43,8 +43,8 @@ def train_model(model, training_data):
 			instance, label = training_data[i]
 			model.zero_grad()
 
-			gene_vec = make_gene_vector(instance)
-			expected = make_expected(label, label_to_ix)
+			gene_vec = make_gene_vector(instance) # convert input sample to tensor
+			expected = make_expected(label, label_to_ix) # converts normal/tumor to tensor
 
 			# get probabilities from instance
 			output = model(gene_vec)
@@ -53,7 +53,8 @@ def train_model(model, training_data):
 			loss = loss_function(output, expected)
 			loss.backward()
 			optimizer.step()
-			model.mask()
+
+			model.mask() # make sure weights are still zeroed for certain models
 
 	if debug:
 		print("\nSaving the model to file")
@@ -65,16 +66,24 @@ def train_model(model, training_data):
 def user_train_input():
 	training_data = load_data("train")
 	keys = {"split": NN_split(), "dense": NN_dense(), "zerow": NN_zerow()}
-	if sys.argv[1].lower() == "all" or len(sys.argv[1:]) == 0:
-		for i in keys:
-			train_model(keys[i], training_data)
-	elif len(sys.argv[1:]) >= 1:
-		for i in sys.argv[1:]:
-			if i.lower() not in keys:
-				print("Wrong model name:", i)
+	
+	if len(sys.argv[1:]) >= 1:
+		if sys.argv[2] == "all":
+			for model in keys:
+				train_model(keys[model], training_data)
 				return
-		for i in sys.argv[1:]:
-			train_model(keys[i.lower()], training_data)
+		else:
+			for i in sys.argv[1:]:
+				if i.lower() not in keys:
+					raise ValueError("Wrong model name:", i)
+					return
+			for i in sys.argv[1:]:
+				train_model(keys[i.lower()], training_data)
+			return
+	else:
+		for model in keys:
+			train_model(keys[model], training_data)
+			return
 
 if __name__ == "__main__":
 	debug = True

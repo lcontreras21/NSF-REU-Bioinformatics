@@ -1,4 +1,8 @@
-### instead of bash script, run files here
+'''
+Main file for the project
+If running from a python terminal, only need to import this file. 
+Then, functions from other files can then be run. 
+'''
 
 from models.nn_zerow import *
 from models.nn_dense import *
@@ -9,6 +13,7 @@ from other_py_files.make_subset_data import *
 from train_models import *
 from collect_weights import *
 from analyze import *
+
 import sys
 import time
 from datetime import timedelta
@@ -37,7 +42,7 @@ def create_files():
 	end = time.monotonic()
 	print("Run time:", timedelta(seconds=end-start))
 
-def main(n):
+def main(n, models=["dense", "split", "zerow"]):
 	presets = [debug, record_data, test_behavior, seed, data]
 	message = ["|Settings| Debugging is ", "Data recording is ", "Testing weight environment is ", "Fixed starting seed is ", "Dataset is "]
 	status = {True: "on", False: "off", "subset": "subset dataset", "full": "full dataset"}
@@ -55,8 +60,8 @@ def main(n):
 	start_time = time.monotonic()
 
 	#print("Creating a new randomized subset of data for training and testing.")
-	create_train_test_data() # remove this function if randomized data isn't needed
-	save_indicies()
+	#create_train_test_data() # remove this function if randomized data isn't needed
+	
 	training_data = load_data("train")
 	testing_data = load_data("test")
 	
@@ -67,15 +72,10 @@ def main(n):
 	for i in range(int(n)):
 		# Trains the models
 		status = "Currently on iteration " + "{:03}".format(i+1) + ", working on:"
-		
-		print(status, "Zerow", end="\r")
-		train_model(NN_zerow(), training_data)
-
-		print(status, "Dense", end="\r")
-		train_model(NN_dense(), training_data)
-
-		print(status, "Split", end="\r")
-		train_model(NN_split(), training_data)
+		model_key = {"dense": NN_dense(), "split": NN_split(), "zerow": NN_zerow()}
+		for i in models:
+			print(status, i, end="\r")
+			train_model(model_key[i.lower()], training_data)
 
 		# Records the weights and saves to file
 		if record_data:
@@ -95,14 +95,31 @@ def main(n):
 	print("\nPercentages from session")
 	print_percentages()
 
-	if testing_parameters:
+	if testing_parameters: # if testing parameters and don't want to save data
 		reset_files()
 
 	end_time = time.monotonic()
 	print("\n-----Finished experiment in", timedelta(seconds=end_time - start_time))
 
-if __name__ == "__main__":
+def user_main_input():
 	if sys.argv[1] == "create_files":
 		create_files()
 	else:
-		main(sys.argv[1])
+		if len(sys.argv[1:]) > 1:
+			if sys.argv[2] == "all":
+				main(sys.argv[1])
+				return
+			else:
+				for i in sys.argv[2:]:
+					if i.lower() not in ["split", "dense", "zerow"]:
+						raise ValueError(i + " not a valid model name.")
+						return
+				main(sys.argv[1], models=sys.argv[2:])
+				return
+		else:
+			main(sys.argv[1])
+			return
+
+
+if __name__ == "__main__":
+	user_main_input()

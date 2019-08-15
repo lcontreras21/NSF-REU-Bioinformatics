@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from pprint import pprint
 
 def load_output_data():
-	file_dir = "text_files/analysis/swapped/"
+	file_dir = text_path
 	fc2_weight_data_loc = file_dir + "fc2_weights.txt"
 	fc2_bias_data_loc = file_dir + "fc2_bias.txt"
 	files = [fc2_weight_data_loc, fc2_bias_data_loc] 
@@ -192,7 +192,7 @@ def build_weight_statistics(cutoff=0.3):
 	return node_stats
 
 
-def weight_statistics(cutoff=0.3, set_crits=[2.25, 0.80, 10]):
+def weight_statistics(set_crits, cutoff=0.3):
 	node_stats = build_weight_statistics(cutoff=cutoff)
 
 	special_nodes = {i:[] for i in ["Split"]} #["Zero-weights", "Split"]}
@@ -222,8 +222,8 @@ def weight_statistics(cutoff=0.3, set_crits=[2.25, 0.80, 10]):
 		with open(text_gene_groups, "r") as f:
 			for i, line in enumerate(f):
 				node_data = node_stats[x][0][i]
-				if 0 in node_data:
-					continue
+				#if 0 in node_data:
+				#	continue
 				avgs = ["{:.3f}".format(node_data[i+4] / node_data[i]) for i in [2, 3]]
 				name = line.split()[0]
 				if i in z:
@@ -232,9 +232,8 @@ def weight_statistics(cutoff=0.3, set_crits=[2.25, 0.80, 10]):
 		print("Groups found:", len(z))
 
 if __name__ == "__main__":
-	try:
+	set_crits = [2.25, 0.80, 10]
+	if len(sys.argv[1:]) > 0:
 		set_crits = list(map(float, sys.argv[1:]))
-	except:
-		set_crits = [2.25, 0.80, 10]
-		print("The given crits were badly formatted.")
-	weight_statistics(cutoff=0.15, set_crits=set_crits)
+	print(set_crits)
+	weight_statistics(set_crits, cutoff=0.15)
